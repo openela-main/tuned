@@ -1,0 +1,83 @@
+diff --git a/profiles/latency-performance/tuned.conf b/profiles/latency-performance/tuned.conf
+index d200b5c..877229f 100644
+--- a/profiles/latency-performance/tuned.conf
++++ b/profiles/latency-performance/tuned.conf
+@@ -32,3 +32,16 @@ vm.dirty_background_ratio=3
+ # 100 tells the kernel to aggressively swap processes out of physical memory
+ # and move them to swap cache
+ vm.swappiness=10
++
++[scheduler]
++# ktune sysctl settings for rhel6 servers, maximizing i/o throughput
++#
++# Minimal preemption granularity for CPU-bound tasks:
++# (default: 1 msec#  (1 + ilog(ncpus)), units: nanoseconds)
++sched_min_granularity_ns = 3000000
++sched_wakeup_granularity_ns = 4000000
++
++# The total time the scheduler will consider a migrated process
++# "cache hot" and thus less likely to be re-migrated
++# (system default is 500000, i.e. 0.5 ms)
++sched_migration_cost_ns = 5000000
+diff --git a/profiles/sap-hana/tuned.conf b/profiles/sap-hana/tuned.conf
+index aeecf53..8dcee57 100644
+--- a/profiles/sap-hana/tuned.conf
++++ b/profiles/sap-hana/tuned.conf
+@@ -20,3 +20,7 @@ kernel.numa_balancing = 0
+ vm.dirty_ratio = 40
+ vm.dirty_background_ratio = 10
+ vm.swappiness = 10
++
++[scheduler]
++sched_min_granularity_ns = 3000000
++sched_wakeup_granularity_ns = 4000000
+diff --git a/profiles/throughput-performance/tuned.conf b/profiles/throughput-performance/tuned.conf
+index 62a7322..7c55fb2 100644
+--- a/profiles/throughput-performance/tuned.conf
++++ b/profiles/throughput-performance/tuned.conf
+@@ -63,9 +63,31 @@ vm.swappiness=10
+ # on older kernels
+ net.core.somaxconn=>2048
+ 
++[scheduler]
++# ktune sysctl settings for rhel6 servers, maximizing i/o throughput
++#
++# Minimal preemption granularity for CPU-bound tasks:
++# (default: 1 msec#  (1 + ilog(ncpus)), units: nanoseconds)
++sched_min_granularity_ns = 10000000
++
++# SCHED_OTHER wake-up granularity.
++# (default: 1 msec#  (1 + ilog(ncpus)), units: nanoseconds)
++#
++# This option delays the preemption effects of decoupled workloads
++# and reduces their over-scheduling. Synchronous workloads will still
++# have immediate wakeup/sleep latencies.
++sched_wakeup_granularity_ns = 15000000
++
+ # Marvell ThunderX
+ [sysctl.thunderx]
+ type=sysctl
+ uname_regex=aarch64
+ cpuinfo_regex=${thunderx_cpuinfo_regex}
+ kernel.numa_balancing=0
++
++# AMD
++[scheduler.amd]
++type=scheduler
++uname_regex=x86_64
++cpuinfo_regex=${amd_cpuinfo_regex}
++sched_migration_cost_ns=5000000
+diff --git a/profiles/virtual-host/tuned.conf b/profiles/virtual-host/tuned.conf
+index 5301d9f..74a5fb0 100644
+--- a/profiles/virtual-host/tuned.conf
++++ b/profiles/virtual-host/tuned.conf
+@@ -14,3 +14,9 @@ vm.dirty_background_ratio = 5
+ [cpu]
+ # Setting C3 state sleep mode/power savings
+ force_latency=cstate.id_no_zero:3|70
++
++[scheduler]
++# The total time the scheduler will consider a migrated process
++# "cache hot" and thus less likely to be re-migrated
++# (system default is 500000, i.e. 0.5 ms)
++sched_migration_cost_ns = 5000000
