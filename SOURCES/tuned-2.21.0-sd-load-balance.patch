@@ -1,0 +1,80 @@
+diff --git a/profiles/cpu-partitioning/script.sh b/profiles/cpu-partitioning/script.sh
+index ec422ca..cb378b7 100755
+--- a/profiles/cpu-partitioning/script.sh
++++ b/profiles/cpu-partitioning/script.sh
+@@ -2,6 +2,38 @@
+ 
+ . /usr/lib/tuned/functions
+ 
++no_balance_cpus_file=$STORAGE/no-balance-cpus.txt
++
++change_sd_balance_bit()
++{
++    local set_bit=$1
++    local flags_cur=
++    local file=
++    local cpu=
++
++    for cpu in $(cat $no_balance_cpus_file); do
++        for file in $(find /proc/sys/kernel/sched_domain/cpu$cpu -name flags -print); do
++            flags_cur=$(cat $file)
++            if [ $set_bit -eq 1 ]; then
++                flags_cur=$((flags_cur | 0x1))
++            else
++                flags_cur=$((flags_cur & 0xfffe))
++            fi
++            echo $flags_cur > $file
++        done
++    done
++}
++
++disable_balance_domains()
++{
++    change_sd_balance_bit 0
++}
++
++enable_balance_domains()
++{
++    change_sd_balance_bit 1
++}
++
+ start() {
+     mkdir -p "${TUNED_tmpdir}/etc/systemd"
+     mkdir -p "${TUNED_tmpdir}/usr/lib/dracut/hooks/pre-udev"
+@@ -9,6 +41,9 @@ start() {
+     cp 00-tuned-pre-udev.sh "${TUNED_tmpdir}/usr/lib/dracut/hooks/pre-udev/"
+     setup_kvm_mod_low_latency
+     disable_ksm
++
++    echo "$TUNED_no_balance_cores_expanded" | sed 's/,/ /g' > $no_balance_cpus_file
++    disable_balance_domains
+     return "$?"
+ }
+ 
+@@ -18,6 +53,7 @@ stop() {
+         teardown_kvm_mod_low_latency
+         enable_ksm
+     fi
++    enable_balance_domains
+     return "$?"
+ }
+ 
+diff --git a/profiles/cpu-partitioning/tuned.conf b/profiles/cpu-partitioning/tuned.conf
+index 11f03cf..a682c9c 100644
+--- a/profiles/cpu-partitioning/tuned.conf
++++ b/profiles/cpu-partitioning/tuned.conf
+@@ -35,8 +35,6 @@ no_balance_cores_expanded=${f:cpulist_unpack:${no_balance_cores}}
+ # Fail if isolated_cores contains CPUs which are not online
+ assert2=${f:assertion:isolated_cores contains online CPU(s):${isolated_cores_expanded}:${isolated_cores_online_expanded}}
+ 
+-cmd_isolcpus=${f:regex_search_ternary:${no_balance_cores}:\s*[0-9]: isolcpus=${no_balance_cores}:}
+-
+ [sysfs]
+ /sys/bus/workqueue/devices/writeback/cpumask = ${not_isolated_cpumask}
+ /sys/devices/virtual/workqueue/cpumask = ${not_isolated_cpumask}
+@@ -62,4 +60,4 @@ priority=10
+ initrd_remove_dir=True
+ initrd_dst_img=tuned-initrd.img
+ initrd_add_dir=${tmpdir}
+-cmdline_cpu_part=+nohz=on${cmd_isolcpus} nohz_full=${isolated_cores} rcu_nocbs=${isolated_cores} tuned.non_isolcpus=${not_isolated_cpumask} intel_pstate=disable nosoftlockup
++cmdline_cpu_part=+nohz=on nohz_full=${isolated_cores} rcu_nocbs=${isolated_cores} tuned.non_isolcpus=${not_isolated_cpumask} intel_pstate=disable nosoftlockup
