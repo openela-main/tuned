@@ -1,5 +1,5 @@
 diff --git a/profiles/cpu-partitioning/script.sh b/profiles/cpu-partitioning/script.sh
-index 84e04fd..8677050 100755
+index ec422ca..cb378b7 100755
 --- a/profiles/cpu-partitioning/script.sh
 +++ b/profiles/cpu-partitioning/script.sh
 @@ -2,6 +2,38 @@
@@ -60,7 +60,7 @@ index 84e04fd..8677050 100755
  }
  
 diff --git a/profiles/cpu-partitioning/tuned.conf b/profiles/cpu-partitioning/tuned.conf
-index 979e40b..842e2bd 100644
+index 11f03cf..a682c9c 100644
 --- a/profiles/cpu-partitioning/tuned.conf
 +++ b/profiles/cpu-partitioning/tuned.conf
 @@ -35,8 +35,6 @@ no_balance_cores_expanded=${f:cpulist_unpack:${no_balance_cores}}
@@ -69,10 +69,10 @@ index 979e40b..842e2bd 100644
  
 -cmd_isolcpus=${f:regex_search_ternary:${no_balance_cores}:\s*[0-9]: isolcpus=${no_balance_cores}:}
 -
- [sysctl]
- kernel.hung_task_timeout_secs = 600
- kernel.nmi_watchdog = 0
-@@ -68,4 +66,4 @@ priority=10
+ [sysfs]
+ /sys/bus/workqueue/devices/writeback/cpumask = ${not_isolated_cpumask}
+ /sys/devices/virtual/workqueue/cpumask = ${not_isolated_cpumask}
+@@ -62,4 +60,4 @@ priority=10
  initrd_remove_dir=True
  initrd_dst_img=tuned-initrd.img
  initrd_add_dir=${tmpdir}

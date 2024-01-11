@@ -34,7 +34,7 @@
 
 Summary: A dynamic adaptive system tuning daemon
 Name: tuned
-Version: 2.20.0
+Version: 2.21.0
 Release: 1%{?prerel1}%{?dist}
 License: GPLv2+
 Source0: https://github.com/redhat-performance/%{name}/archive/v%{version}%{?prerel2}/%{name}-%{version}%{?prerel2}.tar.gz
@@ -96,7 +96,7 @@ Requires: python3-syspurpose
 # Revert upstream profiles changes which have not been approved for RHEL-8 (yet)
 Patch0: tuned-2.20.0-rhel-8-profiles.patch
 # Revert no balancing cores to use SD_LOAD_BALANCE (see rhbz#1874596 for details)
-Patch1: tuned-2.18.0-sd-load-balance.patch
+Patch1: tuned-2.21.0-sd-load-balance.patch
 
 %description
 The tuned package contains a daemon that tunes system settings dynamically.
@@ -410,6 +410,7 @@ fi
 %exclude %{_prefix}/lib/tuned/spindown-disk
 %exclude %{_prefix}/lib/tuned/sap-netweaver
 %exclude %{_prefix}/lib/tuned/sap-hana
+%exclude %{_prefix}/lib/tuned/sap-hana-kvm-guest
 %exclude %{_prefix}/lib/tuned/mssql
 %exclude %{_prefix}/lib/tuned/oracle
 %exclude %{_prefix}/lib/tuned/atomic-host
@@ -434,7 +435,6 @@ fi
 %config(noreplace) %verify(not size mtime md5) %{_sysconfdir}/tuned/post_loaded_profile
 %config(noreplace) %{_sysconfdir}/tuned/tuned-main.conf
 %config(noreplace) %verify(not size mtime md5) %{_sysconfdir}/tuned/bootcmdline
-%{_sysconfdir}/dbus-1/system.d/com.redhat.tuned.conf
 %verify(not size mtime md5) %{_sysconfdir}/modprobe.d/tuned.conf
 %{_tmpfilesdir}/tuned.conf
 %{_unitdir}/tuned.service
@@ -446,6 +446,7 @@ fi
 %{_mandir}/man8/tuned*
 %dir %{_datadir}/tuned
 %{_datadir}/tuned/grub2
+%{_datadir}/dbus-1/system.d/com.redhat.tuned.conf
 %{_datadir}/polkit-1/actions/com.redhat.tuned.policy
 %ghost %{_sysconfdir}/modprobe.d/kvm.rt.tuned.conf
 %{_prefix}/lib/kernel/install.d/92-tuned.install
@@ -485,6 +486,7 @@ fi
 
 %files profiles-sap-hana
 %{_prefix}/lib/tuned/sap-hana
+%{_prefix}/lib/tuned/sap-hana-kvm-guest
 %{_mandir}/man7/tuned-profiles-sap-hana.7*
 
 %files profiles-mssql
@@ -550,6 +552,20 @@ fi
 %{_mandir}/man7/tuned-profiles-openshift.7*
 
 %changelog
+* Tue Aug 29 2023 Jaroslav Škarvada <jskarvad@redhat.com> - 2.21.0-1
+- new release
+  - api: fixed stop method not to require any parameter
+    resolves: rhbz#2235638
+
+* Sun Aug 20 2023 Jaroslav Škarvada <jskarvad@redhat.com> - 2.21.0-0.1.rc1
+- new release
+  - rebased tuned to latest upstream
+    resolves: rhbz#2182119
+  - sap-hana: new profile sap-hana-kvm-guest
+    resolves: rhbz#2173740
+  - serialized SIGHUP handler to prevent possible bootcmdline corruption
+    resolves: rhbz#2215298
+
 * Fri Feb 17 2023 Jaroslav Škarvada <jskarvad@redhat.com> - 2.20.0-1
 - new release
   - rebased tuned to latest upstream
