@@ -1,0 +1,54 @@
+From 7557cf975282326cdbfe55b7b803d8075ff37cba Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Jaroslav=20=C5=A0karvada?= <jskarvad@redhat.com>
+Date: Tue, 12 Mar 2024 20:25:43 +0100
+Subject: [PATCH] epyc-eda: added new profile for EDA compute workloads on AMD
+ EPYC CPUs
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Signed-off-by: Jaroslav Škarvada <jskarvad@redhat.com>
+---
+ man/tuned-profiles.7         |  4 ++++
+ profiles/epyc-eda/tuned.conf | 14 ++++++++++++++
+ 2 files changed, 18 insertions(+)
+ create mode 100644 profiles/epyc-eda/tuned.conf
+
+diff --git a/man/tuned-profiles.7 b/man/tuned-profiles.7
+index 10cad7b..600e8bb 100644
+--- a/man/tuned-profiles.7
++++ b/man/tuned-profiles.7
+@@ -141,6 +141,10 @@ profiles (e.g. throughput\-performance profile), example:
+ Profile optimized for AWS EC2 instances. It is based on the
+ throughput\-performance profile.
+ 
++.TP
++.BI "epyc-eda"
++Profile optimized for EDA compute workloads on AMD EPYC CPUs.
++
+ .SH "FILES"
+ .nf
+ .I /etc/tuned/*
+diff --git a/profiles/epyc-eda/tuned.conf b/profiles/epyc-eda/tuned.conf
+new file mode 100644
+index 0000000..482d404
+--- /dev/null
++++ b/profiles/epyc-eda/tuned.conf
+@@ -0,0 +1,14 @@
++#
++# tuned configuration
++#
++
++[main]
++summary=Optimize for EDA compute workloads on AMD EPYC CPUs
++description=Configures virtual memory, CPU governors, and network settings for EDA compute workloads.
++include=throughput-performance
++
++# AMD
++[scheduler.amd]
++type=scheduler
++#Allow processes to rapidly move between cores to avoid idle time and maximize CPU usage
++sched_migration_cost_ns=10000
+-- 
+2.44.0
+

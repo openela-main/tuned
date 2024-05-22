@@ -34,8 +34,8 @@
 
 Summary: A dynamic adaptive system tuning daemon
 Name: tuned
-Version: 2.21.0
-Release: 1%{?prerel1}%{?dist}
+Version: 2.22.1
+Release: 4%{?prerel1}%{?dist}
 License: GPLv2+
 Source0: https://github.com/redhat-performance/%{name}/archive/v%{version}%{?prerel2}/%{name}-%{version}%{?prerel2}.tar.gz
 # RHEL-8 specific recommend.conf:
@@ -94,9 +94,11 @@ Requires: python3-syspurpose
 %endif
 %endif
 # Revert upstream profiles changes which have not been approved for RHEL-8 (yet)
-Patch0: tuned-2.20.0-rhel-8-profiles.patch
+Patch0: tuned-2.22.0-rhel-8-profiles.patch
 # Revert no balancing cores to use SD_LOAD_BALANCE (see rhbz#1874596 for details)
 Patch1: tuned-2.21.0-sd-load-balance.patch
+# epyc-eda TuneD profile only for RHEL-8 (see RHEL-27528 for details)
+Patch2: tuned-2.22.1-profile-epyc-eda.patch
 
 %description
 The tuned package contains a daemon that tunes system settings dynamically.
@@ -255,6 +257,17 @@ Requires: %{name} = %{version}
 %description profiles-openshift
 Additional TuneD profile(s) optimized for OpenShift.
 
+%package ppd
+Summary: PPD compatibility daemon
+Requires: %{name} = %{version}
+# The compatibility daemon is swappable for power-profiles-daemon
+Provides: ppd-service
+Conflicts: ppd-service
+
+%description ppd
+An API translation daemon that allows applications to easily transition
+to TuneD from power-profiles-daemon (PPD).
+
 %prep
 %autosetup -p1 -n %{name}-%{version}%{?prerel2}
 
@@ -271,9 +284,7 @@ make html %{make_python_arg}
 
 %install
 make install DESTDIR=%{buildroot} DOCDIR=%{docdir} %{make_python_arg}
-%if 0%{?rhel}
-sed -i 's/\(dynamic_tuning[ \t]*=[ \t]*\).*/\10/' %{buildroot}%{_sysconfdir}/tuned/tuned-main.conf
-%endif
+make install-ppd DESTDIR=%{buildroot} DOCDIR=%{docdir} %{make_python_arg}
 
 %if ! 0%{?rhel}
 # manual
@@ -551,7 +562,58 @@ fi
 %{_prefix}/lib/tuned/openshift-node
 %{_mandir}/man7/tuned-profiles-openshift.7*
 
+%files ppd
+%{_sbindir}/tuned-ppd
+%{_unitdir}/tuned-ppd.service
+%{_datadir}/dbus-1/system-services/net.hadess.PowerProfiles.service
+%{_datadir}/dbus-1/system.d/net.hadess.PowerProfiles.conf
+%{_datadir}/polkit-1/actions/net.hadess.PowerProfiles.policy
+%config(noreplace) %{_sysconfdir}/tuned/ppd.conf
+
 %changelog
+* Wed Mar 13 2024 Jaroslav Škarvada <jskarvad@redhat.com> - 2.22.1-4
+- release bump due to broken c8s
+  related: RHEL-27528
+
+* Wed Mar 13 2024 Jaroslav Škarvada <jskarvad@redhat.com> - 2.22.1-3
+- release bump
+  related: RHEL-27528
+
+* Tue Mar 12 2024 Jaroslav Škarvada <jskarvad@redhat.com> - 2.22.1-2
+- profiles: added epyc-eda profile
+  resolves: RHEL-27528
+
+* Thu Feb 22 2024 Jaroslav Škarvada <jskarvad@redhat.com> - 2.22.1-1
+- new release
+  - rebased tuned to latest upstream
+    related: RHEL-17119
+  - renamed intel_uncore plugin to uncore
+  - network-throughput: increased net.ipv4.tcp_rmem default value
+
+* Fri Feb 16 2024 Jaroslav Škarvada <jskarvad@redhat.com> - 2.22.0-1
+- new release
+  - rebased tuned to latest upstream
+    related: RHEL-17119
+  - lower CPU usage by using runtime=0 in profiles using scheduler plugin
+    resolves: RHEL-6869
+
+* Fri Feb  9 2024 Jaroslav Škarvada <jskarvad@redhat.com> - 2.22.0-0.1.rc1
+- new release
+  - rebased tuned to latest upstream
+    resolves: RHEL-17119
+  - print all arguments of failing commands in error messages
+  - plugin_sysctl: added support for sysctl names with slash
+  - tuned-adm: added support for moving devices between plugin instances
+  - api: added methods for retrieval of plugin instances and devices
+  - plugin_cpu: amd-pstate mentioned instead of just intel_pstate
+  - hotplug: do not report ENOENT errors on device remove
+  - plugin_sysctl: expand variables when reporting overrides
+  - plugin_acpi: new plugin which handles ACPI platform_profile
+  - plugin_bootloader: skip calling rpm-ostree kargs in no-op case
+  - plugin_cpu: support cstate settings of pm_qos_resume_latency_us
+  - scheduler: add option for ignoring IRQs affinity
+  - plugin_intel_uncore: new plugin for uncore setting
+
 * Tue Aug 29 2023 Jaroslav Škarvada <jskarvad@redhat.com> - 2.21.0-1
 - new release
   - api: fixed stop method not to require any parameter
