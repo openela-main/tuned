@@ -1,0 +1,28 @@
+From 04ead944fdf640ed986331179e533542efc934c7 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Jaroslav=20=C5=A0karvada?= <jskarvad@redhat.com>
+Date: Mon, 8 Apr 2024 11:03:47 +0200
+Subject: [PATCH] sap-netweaver: increased vm.max_map_count
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Resolves: RHEL-31757
+
+Signed-off-by: Jaroslav Škarvada <jskarvad@redhat.com>
+---
+ profiles/sap-netweaver/tuned.conf | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/profiles/sap-netweaver/tuned.conf b/profiles/sap-netweaver/tuned.conf
+index a1cfd17..81c4d44 100644
+--- a/profiles/sap-netweaver/tuned.conf
++++ b/profiles/sap-netweaver/tuned.conf
+@@ -10,4 +10,4 @@ include=throughput-performance
+ kernel.sem = 32000 1024000000 500 32000
+ kernel.shmall = 18446744073692774399
+ kernel.shmmax = 18446744073692774399
+-vm.max_map_count = 2000000
++vm.max_map_count = 2147483647
+-- 
+2.44.0
+
