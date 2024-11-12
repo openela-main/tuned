@@ -34,7 +34,7 @@
 
 Summary: A dynamic adaptive system tuning daemon
 Name: tuned
-Version: 2.22.1
+Version: 2.24.0
 Release: 1%{?prerel1}%{?dist}
 License: GPLv2+
 Source0: https://github.com/redhat-performance/%{name}/archive/v%{version}%{?prerel2}/%{name}-%{version}%{?prerel2}.tar.gz
@@ -98,6 +98,8 @@ Recommends: subscription-manager
 Requires: python3-syspurpose
 %endif
 %endif
+# Revert default profile directory migration only applicable for RHEL-10+
+Patch0: tuned-2.24.0-revert-profile-migration.patch
 
 %description
 The tuned package contains a daemon that tunes system settings dynamically.
@@ -262,6 +264,7 @@ Requires: %{name} = %{version}
 # The compatibility daemon is swappable for power-profiles-daemon
 Provides: ppd-service
 Conflicts: ppd-service
+Conflicts: power-profiles-daemon
 
 %description ppd
 An API translation daemon that allows applications to easily transition
@@ -326,6 +329,10 @@ if [ -r "%{_sysconfdir}/default/grub" ]; then
 fi
 
 
+%post ppd
+%systemd_post tuned-ppd.service
+
+
 %preun
 %systemd_preun tuned.service
 if [ "$1" == 0 ]; then
@@ -334,6 +341,10 @@ if [ "$1" == 0 ]; then
 # clear temporal storage
   rm -f /run/tuned/*
 fi
+
+
+%preun ppd
+%systemd_preun tuned-ppd.service
 
 
 %postun
@@ -375,10 +386,22 @@ if [ "$1" == 0 ]; then
 fi
 
 
+%postun ppd
+%systemd_postun_with_restart tuned-ppd.service
+
+
 %triggerun -- tuned < 2.0-0
 # remove ktune from old tuned, now part of tuned
 /usr/sbin/service ktune stop &>/dev/null || :
 /usr/sbin/chkconfig --del ktune &>/dev/null || :
+
+
+%triggerun ppd -- power-profiles-daemon
+# if swapping power-profiles-daemon for tuned-ppd, check whether it is active
+if systemctl is-active --quiet power-profiles-daemon; then
+  mkdir -p %{_localstatedir}/lib/rpm-state/tuned
+  touch %{_localstatedir}/lib/rpm-state/tuned/ppd-active
+fi
 
 
 %posttrans
@@ -388,6 +411,15 @@ if [ -d %{_sysconfdir}/grub.d ]; then
   cp -a %{_datadir}/tuned/grub2/00_tuned %{_sysconfdir}/grub.d/00_tuned
   selinuxenabled &>/dev/null && \
     restorecon %{_sysconfdir}/grub.d/00_tuned &>/dev/null || :
+fi
+
+
+%posttrans ppd
+# if power-profiles-daemon was active before installing tuned-ppd,
+# start tuned-ppd right away
+if [ -f %{_localstatedir}/lib/rpm-state/tuned/ppd-active ]; then
+  systemctl start tuned-ppd
+  rm -rf %{_localstatedir}/lib/rpm-state/tuned
 fi
 
 
@@ -570,6 +602,46 @@ fi
 %config(noreplace) %{_sysconfdir}/tuned/ppd.conf
 
 %changelog
+* Wed Aug  7 2024 Jaroslav Škarvada <jskarvad@redhat.com> - 2.24.0-1
+- new release
+  - rebased tuned to latest upstream
+    related: RHEL-50568
+  - clear plugin repository when stopping tuning
+  - man: add description of the balanced-battery profile
+
+* Fri Jul 26 2024 Jaroslav Škarvada <jskarvad@redhat.com> - 2.24.0-0.2.rc1
+- fixed functions packaging and added explicit conflict with power-profiles-daemon
+  related: RHEL-50568
+
+* Thu Jul 25 2024 Jaroslav Škarvada <jskarvad@redhat.com> - 2.24.0-0.1.rc1
+- new release
+  - rebased tuned to latest upstream
+    resolves: RHEL-50568
+  - spec: create /etc/tuned/profiles directory
+  - hotplug: wait for device initialization
+  - sap-netweaver: increased vm.max_map_count
+    resolves: RHEL-31757
+  - daemon: buffer sighup signal
+    resolves: RHEL-31180
+  - added an option to configure profile directories
+    resolves: RHEL-26157
+  - api: added commands to dynamically create/destroy instances
+  - functions: added 'intel_recommended_pstate'
+  - functions: added 'log' which helps with debugging
+  - functions: added 'package2cpus' and 'packages2uncores' matchers
+  - functions: added 'lscpu' to list CPU details
+  - plugins: added plugin_irq
+  - plugin_video: added support for amdgpu `panel_power_savings` attribute
+  - plugin_cpu: check that writes are necessary if they may cause redundant IPIs
+    resolves: RHEL-25613
+  - plugin_uncore: allow to configure frequency limits using percent
+  - amd-pstate: added support for controlling core performance boost
+  - plugin_scheduler: adjusted error logging in _set_affinity
+    resolves: RHEL-46560
+  - plugin_audio: enabled controller reset to fix suspend with NVIDIA
+  - plugin_irq: fixed expansion of variables
+  - plugin_irqbalance: switched to IRQBALANCE_BANNED_CPULIST
+
 * Thu Feb 22 2024 Jaroslav Škarvada <jskarvad@redhat.com> - 2.22.1-1
 - new release
   - rebased tuned to latest upstream

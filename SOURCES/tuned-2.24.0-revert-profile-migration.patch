@@ -1,0 +1,508 @@
+diff --git a/Makefile b/Makefile
+index f73f572..1f30598 100644
+--- a/Makefile
++++ b/Makefile
+@@ -47,8 +47,8 @@ $(error Failed to determine python library directory)
+ endif
+ KERNELINSTALLHOOKDIR = /usr/lib/kernel/install.d
+ TUNED_SYSTEM_DIR = /usr/lib/tuned
+-TUNED_PROFILES_DIR = $(TUNED_SYSTEM_DIR)/profiles
+-TUNED_RECOMMEND_DIR = $(TUNED_SYSTEM_DIR)/recommend.d
++TUNED_PROFILES_DIR = /usr/lib/tuned
++TUNED_RECOMMEND_DIR = $(TUNED_PROFILES_DIR)/recommend.d
+ TUNED_USER_RECOMMEND_DIR = $(SYSCONFDIR)/tuned/recommend.d
+ BASH_COMPLETIONS = $(DATADIR)/bash-completion/completions
+ 
+@@ -68,7 +68,7 @@ release-cp: release-dir
+ 		tuned-adm.bash dbus.conf recommend.conf tuned-main.conf 00_tuned \
+ 		92-tuned.install bootcmdline modules.conf com.redhat.tuned.policy \
+ 		tuned-gui.py tuned-gui.glade tuned-ppd.py \
+-		tuned-gui.desktop functions $(VERSIONED_NAME)
++		tuned-gui.desktop $(VERSIONED_NAME)
+ 	cp -a doc experiments libexec man profiles systemtap tuned contrib icons \
+ 		tests $(VERSIONED_NAME)
+ 
+@@ -135,7 +135,6 @@ install-dirs:
+ 	mkdir -p $(DESTDIR)/run/tuned
+ 	mkdir -p $(DESTDIR)$(DOCDIR)
+ 	mkdir -p $(DESTDIR)$(SYSCONFDIR)
+-	mkdir -p $(DESTDIR)$(SYSCONFDIR)/tuned/profiles
+ 	mkdir -p $(DESTDIR)$(TUNED_RECOMMEND_DIR)
+ 	mkdir -p $(DESTDIR)$(TUNED_USER_RECOMMEND_DIR)
+ 
+diff --git a/doc/manual/modules/performance/con_inheritance-between-tuned-profiles.adoc b/doc/manual/modules/performance/con_inheritance-between-tuned-profiles.adoc
+index d72cc98..63517ac 100644
+--- a/doc/manual/modules/performance/con_inheritance-between-tuned-profiles.adoc
++++ b/doc/manual/modules/performance/con_inheritance-between-tuned-profiles.adoc
+@@ -15,7 +15,7 @@ include=[replaceable]_parent_
+ 
+ All settings from the [replaceable]_parent_ profile are loaded in this _child_ profile. In the following sections, the _child_ profile can override certain settings inherited from the [replaceable]_parent_ profile or add new settings not present in the [replaceable]_parent_ profile.
+ 
+-You can create your own _child_ profile in the [filename]`/etc/tuned/profiles/` directory based on a pre-installed profile in [filename]`/usr/lib/tuned/profiles/` with only some parameters adjusted.
++You can create your own _child_ profile in the [filename]`/etc/tuned/` directory based on a pre-installed profile in [filename]`/usr/lib/tuned/` with only some parameters adjusted.
+ 
+ If the [replaceable]_parent_ profile is updated, such as after a *TuneD* upgrade, the changes are reflected in the _child_ profile.
+ 
+diff --git a/doc/manual/modules/performance/con_the-location-of-tuned-profiles.adoc b/doc/manual/modules/performance/con_the-location-of-tuned-profiles.adoc
+index 4cd35b3..678ff6a 100644
+--- a/doc/manual/modules/performance/con_the-location-of-tuned-profiles.adoc
++++ b/doc/manual/modules/performance/con_the-location-of-tuned-profiles.adoc
+@@ -5,17 +5,17 @@
+ [role="_abstract"]
+ *TuneD* stores profiles in the following directories:
+ 
+-[filename]`/usr/lib/tuned/profiles/`::
+-Distribution-specific profiles are stored in the [filename]`/usr/lib/tuned/profiles/` directory. Each profile has its own directory. The profile consists of the main configuration file called `tuned.conf`, and optionally other files, for example helper scripts.
++[filename]`/usr/lib/tuned/`::
++Distribution-specific profiles are stored in the [filename]`/usr/lib/tuned/` directory. Each profile has its own directory. The profile consists of the main configuration file called `tuned.conf`, and optionally other files, for example helper scripts.
+ 
+-[filename]`/etc/tuned/profiles/`::
+-If you need to customize a profile, copy the profile directory into the [filename]`/etc/tuned/profiles/` directory, which is used for custom profiles, and then adjust it. If there is a system profile and a custom profile of the same name, the custom profile located in [filename]`/etc/tuned/profiles` is used.
++[filename]`/etc/tuned/`::
++If you need to customize a profile, copy the profile directory into the [filename]`/etc/tuned/` directory, which is used for custom profiles, and then adjust it. If there is a system profile and a custom profile of the same name, the custom profile located in [filename]`/etc/tuned/` is used.
+ 
+ .User-defined profile directories
+ ====
+-If you want to make TuneD load profiles from a directory other than [filename]`/usr/lib/tuned/profiles/` and [filename]`/etc/tuned/profiles/`, you can list it in [filename]`/etc/tuned/tuned-main.conf` as follows:
++If you want to make TuneD load profiles from a directory other than [filename]`/usr/lib/tuned/` and [filename]`/etc/tuned/`, you can list it in [filename]`/etc/tuned/tuned-main.conf` as follows:
+ ----
+-profile_dirs=/usr/lib/tuned/profiles,/etc/tuned/profiles,/my/custom/profiles
++profile_dirs=/usr/lib/tuned,/etc/tuned,/my/custom/profiles
+ ----
+ In this example, profiles are loaded also from [filename]`/my/custom/profiles/`. If two directories contain profiles with the same names, the one that is listed later takes precedence.
+ ====
+diff --git a/doc/manual/modules/performance/proc_creating-new-tuned-profiles.adoc b/doc/manual/modules/performance/proc_creating-new-tuned-profiles.adoc
+index 114e83a..36ea120 100644
+--- a/doc/manual/modules/performance/proc_creating-new-tuned-profiles.adoc
++++ b/doc/manual/modules/performance/proc_creating-new-tuned-profiles.adoc
+@@ -17,11 +17,11 @@ endif::[]
+ 
+ .Procedure
+ 
+-. In the [filename]`/etc/tuned/profiles/` directory, create a new directory named the same as the profile that you want to create:
++. In the [filename]`/etc/tuned/` directory, create a new directory named the same as the profile that you want to create:
+ +
+ [subs=+quotes]
+ ----
+-# mkdir /etc/tuned/profiles/[replaceable]_my-profile_
++# mkdir /etc/tuned/[replaceable]_my-profile_
+ ----
+ 
+ . In the new directory, create a file named [filename]`tuned.conf`. Add a `[main]` section and plug-in definitions in it, according to your requirements.
+diff --git a/doc/manual/modules/performance/proc_modifying-existing-tuned-profiles.adoc b/doc/manual/modules/performance/proc_modifying-existing-tuned-profiles.adoc
+index ba413fe..4447a3f 100644
+--- a/doc/manual/modules/performance/proc_modifying-existing-tuned-profiles.adoc
++++ b/doc/manual/modules/performance/proc_modifying-existing-tuned-profiles.adoc
+@@ -17,11 +17,11 @@ endif::[]
+ 
+ .Procedure
+ 
+-. In the [filename]`/etc/tuned/profiles/` directory, create a new directory named the same as the profile that you want to create:
++. In the [filename]`/etc/tuned/` directory, create a new directory named the same as the profile that you want to create:
+ +
+ [subs=+quotes]
+ ----
+-# mkdir /etc/tuned/profiles/[replaceable]_modified-profile_
++# mkdir /etc/tuned/[replaceable]_modified-profile_
+ ----
+ 
+ . In the new directory, create a file named [filename]`tuned.conf`, and set the `[main]` section as follows:
+@@ -75,13 +75,13 @@ See TuneD log file ('/var/log/tuned/tuned.log') for details.
+ ----
+ 
+ // .An alternative approach
+-// . Alternatively, copy the directory with a system profile from /usr/lib/tuned/profiles/ to /etc/tuned/profiles/. For example:
++// . Alternatively, copy the directory with a system profile from /user/lib/tuned/ to /etc/tuned/. For example:
+ // +
+ // ----
+-// # cp -r /usr/lib/tuned/profiles/throughput-performance /etc/tuned/profiles
++// # cp -r /usr/lib/tuned/throughput-performance /etc/tuned
+ // ----
+ //
+-// . Then, edit the profile in /etc/tuned/profiles/ according to your needs. Note that if there are two profiles of the same name, the profile located in /etc/tuned/profiles/ is loaded. The disadvantage of this approach is that if a system profile is updated after a TuneD upgrade, the changes will not be reflected in the now-outdated modified version.
++// . Then, edit the profile in /etc/tuned according to your needs. Note that if there are two profiles of the same name, the profile located in /etc/tuned/ is loaded. The disadvantage of this approach is that if a system profile is updated after a TuneD upgrade, the changes will not be reflected in the now-outdated modified version.
+ 
+ [role="_additional-resources"]
+ .Additional resources
+diff --git a/doc/manual/modules/performance/proc_setting-the-disk-scheduler-using-tuned.adoc b/doc/manual/modules/performance/proc_setting-the-disk-scheduler-using-tuned.adoc
+index 3314717..72a3e66 100644
+--- a/doc/manual/modules/performance/proc_setting-the-disk-scheduler-using-tuned.adoc
++++ b/doc/manual/modules/performance/proc_setting-the-disk-scheduler-using-tuned.adoc
+@@ -64,7 +64,7 @@ $ tuned-adm active
+ +
+ [subs=+quotes]
+ ----
+-# mkdir /etc/tuned/profiles/[replaceable]__my-profile__
++# mkdir /etc/tuned/[replaceable]__my-profile__
+ ----
+ 
+ . Find the system unique identifier of the selected block device:
+@@ -83,7 +83,7 @@ ID_SERIAL_SHORT=_20120501030900000_
+ The command in the this example will return all values identified as a World Wide Name (WWN) or serial number associated with the specified block device. Although it is preferred to use a WWN, the WWN is not always available for a given device and any values returned by the example command are acceptable to use as the _device system unique ID_.
+ ====
+ 
+-. Create the `/etc/tuned/profiles/[replaceable]_my-profile_/tuned.conf` configuration file. In the file, set the following options:
++. Create the `/etc/tuned/_my-profile_/tuned.conf` configuration file. In the file, set the following options:
+ 
+ .. Optional: Include an existing profile:
+ +
+diff --git a/man/tuned-adm.8 b/man/tuned-adm.8
+index 972f8b6..f29966d 100644
+--- a/man/tuned-adm.8
++++ b/man/tuned-adm.8
+@@ -31,8 +31,8 @@ This command line utility allows you to switch between user definable tuning
+ profiles. Several predefined profiles are already included. You can even
+ create your own profile, either based on one of the existing ones by copying
+ it or make a completely new one. The distribution provided profiles are stored
+-in subdirectories below \fI/usr/lib/tuned/profiles/\fP and the user defined profiles in
+-subdirectories below \fI/etc/tuned/profiles/\fP. If there are profiles with the same name
++in subdirectories below \fI/usr/lib/tuned\fP and the user defined profiles in
++subdirectories below \fI/etc/tuned\fP. If there are profiles with the same name
+ in both places, user defined profiles have precedence.
+ 
+ .SH "OPTIONS"
+diff --git a/man/tuned-profiles.7 b/man/tuned-profiles.7
+index c710da9..10cad7b 100644
+--- a/man/tuned-profiles.7
++++ b/man/tuned-profiles.7
+@@ -30,9 +30,9 @@ performance optimizations but there are also profiles targeted to
+ low power consumption, low latency and others. You can mostly deduce the
+ purpose of the profile by its name or you can see full description below.
+ 
+-The profiles are stored in subdirectories below \fI/usr/lib/tuned/profiles/\fP. If you
+-need to customize the profiles, you can copy them to \fI/etc/tuned/profiles/\fP and modify
+-them as you need. When loading profiles with the same name, \fI/etc/tuned/profiles/\fP takes
++The profiles are stored in subdirectories below \fI/usr/lib/tuned\fP. If you
++need to customize the profiles, you can copy them to \fI/etc/tuned\fP and modify
++them as you need. When loading profiles with the same name, the /etc/tuned takes
+ precedence. In such case you will not lose your customized profiles between
+ TuneD updates.
+ 
+@@ -143,8 +143,8 @@ throughput\-performance profile.
+ 
+ .SH "FILES"
+ .nf
+-.I /etc/tuned/profiles/*
+-.I /usr/lib/tuned/profiles/*
++.I /etc/tuned/*
++.I /usr/lib/tuned/*
+ 
+ .SH "SEE ALSO"
+ .BR tuned (8)
+diff --git a/man/tuned.conf.5 b/man/tuned.conf.5
+index c319130..464b6be 100644
+--- a/man/tuned.conf.5
++++ b/man/tuned.conf.5
+@@ -3,8 +3,8 @@
+ tuned.conf - TuneD profile definition
+ .SH DESCRIPTION
+ This man page documents format of TuneD 2.0 profile definition files.
+-The profile definition is stored in /etc/tuned/profiles/<profile_name>/tuned.conf or in
+-/usr/lib/tuned/profiles/<profile_name>/tuned.conf file where the /etc/tuned/profiles/ directory has
++The profile definition is stored in /etc/tuned/<profile_name>/tuned.conf or in
++/usr/lib/tuned/<profile_name>/tuned.conf file where the /etc/tuned/ directory has 
+ higher priority.
+ 
+ The \fBtuned.conf\fR configures the profile and it is in ini-file format.
+diff --git a/tests/beakerlib/Traceback-caused-by-scheduler-plugin-with/runtest.sh b/tests/beakerlib/Traceback-caused-by-scheduler-plugin-with/runtest.sh
+index d5cce71..559bb02 100755
+--- a/tests/beakerlib/Traceback-caused-by-scheduler-plugin-with/runtest.sh
++++ b/tests/beakerlib/Traceback-caused-by-scheduler-plugin-with/runtest.sh
+@@ -18,7 +18,7 @@
+ . /usr/share/beakerlib/beakerlib.sh || exit 1
+ 
+ PACKAGE="tuned"
+-PROFILE_DIR="/etc/tuned/profiles"
++PROFILE_DIR="/usr/lib/tuned"
+ 
+ rlJournalStart
+     rlPhaseStartSetup
+diff --git a/tests/beakerlib/bz1798183-RFE-support-post-loaded-profile/runtest.sh b/tests/beakerlib/bz1798183-RFE-support-post-loaded-profile/runtest.sh
+index 4825ceb..5b871c7 100755
+--- a/tests/beakerlib/bz1798183-RFE-support-post-loaded-profile/runtest.sh
++++ b/tests/beakerlib/bz1798183-RFE-support-post-loaded-profile/runtest.sh
+@@ -18,11 +18,10 @@
+ . /usr/share/beakerlib/beakerlib.sh || exit 1
+ 
+ PACKAGE="tuned"
+-SYSCONF_DIR=/etc/tuned
+-PROFILE_DIR=$SYSCONF_DIR/profiles
+-ACTIVE_PROFILE=$SYSCONF_DIR/active_profile
+-PROFILE_MODE=$SYSCONF_DIR/profile_mode
+-POST_LOADED_PROFILE=$SYSCONF_DIR/post_loaded_profile
++PROFILE_DIR=/etc/tuned
++ACTIVE_PROFILE=/etc/tuned/active_profile
++PROFILE_MODE=/etc/tuned/profile_mode
++POST_LOADED_PROFILE=/etc/tuned/post_loaded_profile
+ SWAPPINESS=vm.swappiness
+ DIRTY_RATIO=vm.dirty_ratio
+ PID_FILE=/run/tuned/tuned.pid
+@@ -65,7 +64,7 @@ rlJournalStart
+         rlImport "tuned/basic"
+         tunedDisableSystemdRateLimitingStart
+         rlRun "for PYTHON in $PYTHON_CHECK; do \$PYTHON --version 2>/dev/null && break; done" 0 "Detect python"
+-        rlRun "rlFileBackup --clean $SYSCONF_DIR"
++        rlRun "rlFileBackup --clean $PROFILE_DIR"
+         rlRun "cp -r parent $PROFILE_DIR"
+         rlRun "cp -r parent2 $PROFILE_DIR"
+         rlRun "cp -r parent-vars $PROFILE_DIR"
+diff --git a/tests/beakerlib/bz2071418-TuneD-exits-on-duplicate-config-lines-new/runtest.sh b/tests/beakerlib/bz2071418-TuneD-exits-on-duplicate-config-lines-new/runtest.sh
+index 8ecda75..9354b7d 100755
+--- a/tests/beakerlib/bz2071418-TuneD-exits-on-duplicate-config-lines-new/runtest.sh
++++ b/tests/beakerlib/bz2071418-TuneD-exits-on-duplicate-config-lines-new/runtest.sh
+@@ -18,7 +18,7 @@
+ . /usr/share/beakerlib/beakerlib.sh || exit 1
+ 
+ PACKAGE="tuned"
+-PROFILE_DIR=/etc/tuned/profiles
++PROFILE_DIR="/usr/lib/tuned"
+ 
+ rlJournalStart
+     rlPhaseStartSetup
+diff --git a/tests/beakerlib/error-messages/runtest.sh b/tests/beakerlib/error-messages/runtest.sh
+index 12f535e..0a45da2 100755
+--- a/tests/beakerlib/error-messages/runtest.sh
++++ b/tests/beakerlib/error-messages/runtest.sh
+@@ -18,7 +18,7 @@
+ . /usr/share/beakerlib/beakerlib.sh || exit 1
+ 
+ PACKAGE="tuned"
+-PROFILE_DIR="/usr/lib/tuned/profiles"
++PROFILE_DIR="/usr/lib/tuned"
+ 
+ rlJournalStart
+     rlPhaseStartSetup
+diff --git a/tests/beakerlib/variables-support-in-profiles/runtest.sh b/tests/beakerlib/variables-support-in-profiles/runtest.sh
+index 145bd9e..d6d50f7 100755
+--- a/tests/beakerlib/variables-support-in-profiles/runtest.sh
++++ b/tests/beakerlib/variables-support-in-profiles/runtest.sh
+@@ -18,7 +18,7 @@
+ . /usr/share/beakerlib/beakerlib.sh || exit 1
+ 
+ PACKAGE="tuned"
+-PROFILE_DIR="/usr/lib/tuned/profiles"
++PROFILE_DIR="/usr/lib/tuned"
+ 
+ rlJournalStart
+     rlPhaseStartSetup
+diff --git a/tuned-adm.bash b/tuned-adm.bash
+index 18c716b..a4e6075 100644
+--- a/tuned-adm.bash
++++ b/tuned-adm.bash
+@@ -9,7 +9,7 @@ _tuned_adm()
+ 	if [[ "$cword" -eq 1 ]]; then
+ 		COMPREPLY=( $(compgen -W "$commands" -- "$cur" ) )
+ 	elif [[ "$cword" -eq 2 && ("$prev" == "profile" || "$prev" == "profile_info") ]]; then
+-		COMPREPLY=( $(compgen -W "$(command find /usr/lib/tuned/profiles /etc/tuned/profiles -mindepth 1 -maxdepth 1 -type d -printf "%f\n")" -- "$cur" ) )
++		COMPREPLY=( $(compgen -W "$(command find /usr/lib/tuned /etc/tuned -mindepth 1 -maxdepth 1 -type d -printf "%f\n")" -- "$cur" ) )
+ 	else
+ 		COMPREPLY=()
+ 	fi
+diff --git a/tuned-main.conf b/tuned-main.conf
+index 1f1269f..86bca4d 100644
+--- a/tuned-main.conf
++++ b/tuned-main.conf
+@@ -86,4 +86,4 @@ log_file_max_size = 1MB
+ # Directories to search for profiles separated by , or ;
+ # In case of conflicts in profile names, the later directory
+ # takes precedence
+-# profile_dirs = /usr/lib/tuned/profiles,/etc/tuned/profiles
++# profile_dirs = /usr/lib/tuned,/etc/tuned
+diff --git a/tuned.spec b/tuned.spec
+index fc3c5d4..3e4bf99 100644
+--- a/tuned.spec
++++ b/tuned.spec
+@@ -329,14 +329,6 @@ if [ -r "%{_sysconfdir}/default/grub" ]; then
+     %{_sysconfdir}/default/grub
+ fi
+ 
+-%if 0%{?fedora} || 0%{?rhel} >= 10
+-# migrate all user-defined profiles from /etc/tuned/ to /etc/tuned/profiles/
+-for f in %{_sysconfdir}/tuned/*; do
+-  if [ -e "$f/tuned.conf" ]; then
+-    mv -n "$f" %{_sysconfdir}/tuned/profiles/
+-  fi
+-done
+-%endif
+ 
+ 
+ %post ppd
+@@ -453,34 +445,33 @@ fi
+ %exclude %{_sysconfdir}/tuned/realtime-virtual-host-variables.conf
+ %exclude %{_sysconfdir}/tuned/cpu-partitioning-variables.conf
+ %exclude %{_sysconfdir}/tuned/cpu-partitioning-powersave-variables.conf
+-%exclude %{_prefix}/lib/tuned/profiles/default
+-%exclude %{_prefix}/lib/tuned/profiles/desktop-powersave
+-%exclude %{_prefix}/lib/tuned/profiles/laptop-ac-powersave
+-%exclude %{_prefix}/lib/tuned/profiles/server-powersave
+-%exclude %{_prefix}/lib/tuned/profiles/laptop-battery-powersave
+-%exclude %{_prefix}/lib/tuned/profiles/enterprise-storage
+-%exclude %{_prefix}/lib/tuned/profiles/spindown-disk
+-%exclude %{_prefix}/lib/tuned/profiles/sap-netweaver
+-%exclude %{_prefix}/lib/tuned/profiles/sap-hana
+-%exclude %{_prefix}/lib/tuned/profiles/sap-hana-kvm-guest
+-%exclude %{_prefix}/lib/tuned/profiles/mssql
+-%exclude %{_prefix}/lib/tuned/profiles/oracle
+-%exclude %{_prefix}/lib/tuned/profiles/atomic-host
+-%exclude %{_prefix}/lib/tuned/profiles/atomic-guest
+-%exclude %{_prefix}/lib/tuned/profiles/realtime
+-%exclude %{_prefix}/lib/tuned/profiles/realtime-virtual-guest
+-%exclude %{_prefix}/lib/tuned/profiles/realtime-virtual-host
+-%exclude %{_prefix}/lib/tuned/profiles/cpu-partitioning
+-%exclude %{_prefix}/lib/tuned/profiles/cpu-partitioning-powersave
+-%exclude %{_prefix}/lib/tuned/profiles/spectrumscale-ece
+-%exclude %{_prefix}/lib/tuned/profiles/postgresql
+-%exclude %{_prefix}/lib/tuned/profiles/openshift
+-%exclude %{_prefix}/lib/tuned/profiles/openshift-control-plane
+-%exclude %{_prefix}/lib/tuned/profiles/openshift-node
++%exclude %{_prefix}/lib/tuned/default
++%exclude %{_prefix}/lib/tuned/desktop-powersave
++%exclude %{_prefix}/lib/tuned/laptop-ac-powersave
++%exclude %{_prefix}/lib/tuned/server-powersave
++%exclude %{_prefix}/lib/tuned/laptop-battery-powersave
++%exclude %{_prefix}/lib/tuned/enterprise-storage
++%exclude %{_prefix}/lib/tuned/spindown-disk
++%exclude %{_prefix}/lib/tuned/sap-netweaver
++%exclude %{_prefix}/lib/tuned/sap-hana
++%exclude %{_prefix}/lib/tuned/sap-hana-kvm-guest
++%exclude %{_prefix}/lib/tuned/mssql
++%exclude %{_prefix}/lib/tuned/oracle
++%exclude %{_prefix}/lib/tuned/atomic-host
++%exclude %{_prefix}/lib/tuned/atomic-guest
++%exclude %{_prefix}/lib/tuned/realtime
++%exclude %{_prefix}/lib/tuned/realtime-virtual-guest
++%exclude %{_prefix}/lib/tuned/realtime-virtual-host
++%exclude %{_prefix}/lib/tuned/cpu-partitioning
++%exclude %{_prefix}/lib/tuned/cpu-partitioning-powersave
++%exclude %{_prefix}/lib/tuned/spectrumscale-ece
++%exclude %{_prefix}/lib/tuned/postgresql
++%exclude %{_prefix}/lib/tuned/openshift
++%exclude %{_prefix}/lib/tuned/openshift-control-plane
++%exclude %{_prefix}/lib/tuned/openshift-node
+ %{_prefix}/lib/tuned
+ %dir %{_sysconfdir}/tuned
+ %dir %{_sysconfdir}/tuned/recommend.d
+-%dir %{_sysconfdir}/tuned/profiles
+ %dir %{_libexecdir}/tuned
+ %{_libexecdir}/tuned/defirqaffinity*
+ %config(noreplace) %verify(not size mtime md5) %{_sysconfdir}/tuned/active_profile
+@@ -534,40 +525,40 @@ fi
+ %{_mandir}/man8/scomes.*
+ 
+ %files profiles-sap
+-%{_prefix}/lib/tuned/profiles/sap-netweaver
++%{_prefix}/lib/tuned/sap-netweaver
+ %{_mandir}/man7/tuned-profiles-sap.7*
+ 
+ %files profiles-sap-hana
+-%{_prefix}/lib/tuned/profiles/sap-hana
+-%{_prefix}/lib/tuned/profiles/sap-hana-kvm-guest
++%{_prefix}/lib/tuned/sap-hana
++%{_prefix}/lib/tuned/sap-hana-kvm-guest
+ %{_mandir}/man7/tuned-profiles-sap-hana.7*
+ 
+ %files profiles-mssql
+-%{_prefix}/lib/tuned/profiles/mssql
++%{_prefix}/lib/tuned/mssql
+ %{_mandir}/man7/tuned-profiles-mssql.7*
+ 
+ %files profiles-oracle
+-%{_prefix}/lib/tuned/profiles/oracle
++%{_prefix}/lib/tuned/oracle
+ %{_mandir}/man7/tuned-profiles-oracle.7*
+ 
+ %files profiles-atomic
+-%{_prefix}/lib/tuned/profiles/atomic-host
+-%{_prefix}/lib/tuned/profiles/atomic-guest
++%{_prefix}/lib/tuned/atomic-host
++%{_prefix}/lib/tuned/atomic-guest
+ %{_mandir}/man7/tuned-profiles-atomic.7*
+ 
+ %files profiles-realtime
+ %config(noreplace) %{_sysconfdir}/tuned/realtime-variables.conf
+-%{_prefix}/lib/tuned/profiles/realtime
++%{_prefix}/lib/tuned/realtime
+ %{_mandir}/man7/tuned-profiles-realtime.7*
+ 
+ %files profiles-nfv-guest
+ %config(noreplace) %{_sysconfdir}/tuned/realtime-virtual-guest-variables.conf
+-%{_prefix}/lib/tuned/profiles/realtime-virtual-guest
++%{_prefix}/lib/tuned/realtime-virtual-guest
+ %{_mandir}/man7/tuned-profiles-nfv-guest.7*
+ 
+ %files profiles-nfv-host
+ %config(noreplace) %{_sysconfdir}/tuned/realtime-virtual-host-variables.conf
+-%{_prefix}/lib/tuned/profiles/realtime-virtual-host
++%{_prefix}/lib/tuned/realtime-virtual-host
+ %{_mandir}/man7/tuned-profiles-nfv-host.7*
+ 
+ %files profiles-nfv
+@@ -576,32 +567,32 @@ fi
+ %files profiles-cpu-partitioning
+ %config(noreplace) %{_sysconfdir}/tuned/cpu-partitioning-variables.conf
+ %config(noreplace) %{_sysconfdir}/tuned/cpu-partitioning-powersave-variables.conf
+-%{_prefix}/lib/tuned/profiles/cpu-partitioning
+-%{_prefix}/lib/tuned/profiles/cpu-partitioning-powersave
++%{_prefix}/lib/tuned/cpu-partitioning
++%{_prefix}/lib/tuned/cpu-partitioning-powersave
+ %{_mandir}/man7/tuned-profiles-cpu-partitioning.7*
+ 
+ %files profiles-spectrumscale
+-%{_prefix}/lib/tuned/profiles/spectrumscale-ece
++%{_prefix}/lib/tuned/spectrumscale-ece
+ %{_mandir}/man7/tuned-profiles-spectrumscale-ece.7*
+ 
+ %files profiles-compat
+-%{_prefix}/lib/tuned/profiles/default
+-%{_prefix}/lib/tuned/profiles/desktop-powersave
+-%{_prefix}/lib/tuned/profiles/laptop-ac-powersave
+-%{_prefix}/lib/tuned/profiles/server-powersave
+-%{_prefix}/lib/tuned/profiles/laptop-battery-powersave
+-%{_prefix}/lib/tuned/profiles/enterprise-storage
+-%{_prefix}/lib/tuned/profiles/spindown-disk
++%{_prefix}/lib/tuned/default
++%{_prefix}/lib/tuned/desktop-powersave
++%{_prefix}/lib/tuned/laptop-ac-powersave
++%{_prefix}/lib/tuned/server-powersave
++%{_prefix}/lib/tuned/laptop-battery-powersave
++%{_prefix}/lib/tuned/enterprise-storage
++%{_prefix}/lib/tuned/spindown-disk
+ %{_mandir}/man7/tuned-profiles-compat.7*
+ 
+ %files profiles-postgresql
+-%{_prefix}/lib/tuned/profiles/postgresql
++%{_prefix}/lib/tuned/postgresql
+ %{_mandir}/man7/tuned-profiles-postgresql.7*
+ 
+ %files profiles-openshift
+-%{_prefix}/lib/tuned/profiles/openshift
+-%{_prefix}/lib/tuned/profiles/openshift-control-plane
+-%{_prefix}/lib/tuned/profiles/openshift-node
++%{_prefix}/lib/tuned/openshift
++%{_prefix}/lib/tuned/openshift-control-plane
++%{_prefix}/lib/tuned/openshift-node
+ %{_mandir}/man7/tuned-profiles-openshift.7*
+ 
+ %files ppd
+diff --git a/tuned/consts.py b/tuned/consts.py
+index 5134684..76e5a42 100644
+--- a/tuned/consts.py
++++ b/tuned/consts.py
+@@ -13,7 +13,7 @@ DBUS_INTERFACE = "com.redhat.tuned.control"
+ DBUS_OBJECT = "/Tuned"
+ DEFAULT_PROFILE = "balanced"
+ DEFAULT_STORAGE_FILE = "/run/tuned/save.pickle"
+-SYSTEM_PROFILE_DIR = "/usr/lib/tuned/profiles"
++SYSTEM_PROFILE_DIR = "/usr/lib/tuned"
+ PERSISTENT_STORAGE_DIR = "/var/lib/tuned"
+ PLUGIN_MAIN_UNIT_NAME = "main"
+ # Magic section header because ConfigParser does not support "headerless" config
+@@ -174,7 +174,7 @@ CFG_FUNC_UNIX_SOCKET_CONNECTIONS_BACKLOG = "getint"
+ # default rollback strategy
+ CFG_DEF_ROLLBACK = "auto"
+ # default profile directories
+-CFG_DEF_PROFILE_DIRS = [SYSTEM_PROFILE_DIR, "/etc/tuned/profiles"]
++CFG_DEF_PROFILE_DIRS = [SYSTEM_PROFILE_DIR, "/etc/tuned"]
+ 
+ PATH_CPU_DMA_LATENCY = "/dev/cpu_dma_latency"
+ 
