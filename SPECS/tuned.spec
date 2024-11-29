@@ -35,7 +35,7 @@
 Summary: A dynamic adaptive system tuning daemon
 Name: tuned
 Version: 2.24.0
-Release: 1%{?prerel1}%{?dist}
+Release: 2%{?prerel1}%{?dist}
 License: GPLv2+
 Source0: https://github.com/redhat-performance/%{name}/archive/v%{version}%{?prerel2}/%{name}-%{version}%{?prerel2}.tar.gz
 # RHEL-9 specific recommend.conf:
@@ -100,6 +100,7 @@ Requires: python3-syspurpose
 %endif
 # Revert default profile directory migration only applicable for RHEL-10+
 Patch0: tuned-2.24.0-revert-profile-migration.patch
+Patch1: 0001-CVE-2024-52336-and-CVE-2024-52337-fixes.patch
 
 %description
 The tuned package contains a daemon that tunes system settings dynamically.
@@ -602,6 +603,13 @@ fi
 %config(noreplace) %{_sysconfdir}/tuned/ppd.conf
 
 %changelog
+* Mon Nov 18 2024 Jaroslav Škarvada <jskarvad@redhat.com> - 2.24.0-2
+- Fixed privileged execution of arbitrary scripts by active local user,
+  (CVE-2024-52336)
+  Resolves: RHEL-66639
+- Added sanity checks for API methods parameters, (CVE-2024-52337)
+  Resolves: RHEL-66616
+
 * Wed Aug  7 2024 Jaroslav Škarvada <jskarvad@redhat.com> - 2.24.0-1
 - new release
   - rebased tuned to latest upstream
