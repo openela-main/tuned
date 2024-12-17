@@ -35,7 +35,7 @@
 Summary: A dynamic adaptive system tuning daemon
 Name: tuned
 Version: 2.22.1
-Release: 4%{?prerel1}%{?dist}.1
+Release: 5%{?prerel1}%{?dist}
 License: GPLv2+
 Source0: https://github.com/redhat-performance/%{name}/archive/v%{version}%{?prerel2}/%{name}-%{version}%{?prerel2}.tar.gz
 # RHEL-8 specific recommend.conf:
@@ -101,6 +101,7 @@ Patch1: tuned-2.21.0-sd-load-balance.patch
 Patch2: tuned-2.22.1-profile-epyc-eda.patch
 # Update vm.max_map_count in the sap-netweaver profile (see RHEL-32124 for details)
 Patch3: tuned-2.22.1-sap-vm-max-map-count.patch
+Patch4: tuned-2.21.1-CVE-2024-52337.patch
 
 %description
 The tuned package contains a daemon that tunes system settings dynamically.
@@ -573,6 +574,10 @@ fi
 %config(noreplace) %{_sysconfdir}/tuned/ppd.conf
 
 %changelog
+* Mon Nov 18 2024 Jaroslav Škarvada <jskarvad@redhat.com> - 2.22.1-5
+- Added sanity checks for API methods parameters, (CVE-2024-52337)
+  Resolves: RHEL-66614
+
 * Fri May  3 2024 Pavol Žáčik <pzacik@redhat.com> - 2.22.1-4.1
 - sap-netweaver: increase vm.max_map_count
   resolves: RHEL-32124
