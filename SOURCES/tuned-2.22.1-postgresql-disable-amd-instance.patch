@@ -1,0 +1,11 @@
+diff --git a/profiles/postgresql/tuned.conf b/profiles/postgresql/tuned.conf
+index 88da8e4..4fd3810 100644
+--- a/profiles/postgresql/tuned.conf
++++ b/profiles/postgresql/tuned.conf
+@@ -55,3 +55,6 @@ sched_min_granularity_ns = 10000000
+ # "cache hot" and thus less likely to be re-migrated
+ # (system default is 500000, i.e. 0.5 ms)
+ sched_migration_cost_ns = 50000000
++
++[scheduler.amd]
++enabled=false
