@@ -1,0 +1,187 @@
+diff --git a/doc/manual/modules/performance/con_inheritance-between-tuned-profiles.adoc b/doc/manual/modules/performance/con_inheritance-between-tuned-profiles.adoc
+index f5ff98a..2662c29 100644
+--- a/doc/manual/modules/performance/con_inheritance-between-tuned-profiles.adoc
++++ b/doc/manual/modules/performance/con_inheritance-between-tuned-profiles.adoc
+@@ -15,7 +15,7 @@ include=[replaceable]_parent_
+ 
+ All settings from the [replaceable]_parent_ profile are loaded in this _child_ profile. In the following sections, the _child_ profile can override certain settings inherited from the [replaceable]_parent_ profile or add new settings not present in the [replaceable]_parent_ profile.
+ 
+-You can create your own _child_ profile in the [filename]`/etc/tuned/profiles/` directory based on a pre-installed profile in [filename]`/usr/lib/tuned/profiles/` with only some parameters adjusted.
++You can create your own _child_ profile in the [filename]`/etc/tuned/` directory based on a pre-installed profile in [filename]`/usr/lib/tuned/` with only some parameters adjusted.
+ 
+ If the [replaceable]_parent_ profile is updated, such as after a *TuneD* upgrade, the changes are reflected in the _child_ profile.
+ 
+diff --git a/doc/manual/modules/performance/con_the-location-of-tuned-profiles.adoc b/doc/manual/modules/performance/con_the-location-of-tuned-profiles.adoc
+index 4cd35b3..678ff6a 100644
+--- a/doc/manual/modules/performance/con_the-location-of-tuned-profiles.adoc
++++ b/doc/manual/modules/performance/con_the-location-of-tuned-profiles.adoc
+@@ -5,17 +5,17 @@
+ [role="_abstract"]
+ *TuneD* stores profiles in the following directories:
+ 
+-[filename]`/usr/lib/tuned/profiles/`::
+-Distribution-specific profiles are stored in the [filename]`/usr/lib/tuned/profiles/` directory. Each profile has its own directory. The profile consists of the main configuration file called `tuned.conf`, and optionally other files, for example helper scripts.
++[filename]`/usr/lib/tuned/`::
++Distribution-specific profiles are stored in the [filename]`/usr/lib/tuned/` directory. Each profile has its own directory. The profile consists of the main configuration file called `tuned.conf`, and optionally other files, for example helper scripts.
+ 
+-[filename]`/etc/tuned/profiles/`::
+-If you need to customize a profile, copy the profile directory into the [filename]`/etc/tuned/profiles/` directory, which is used for custom profiles, and then adjust it. If there is a system profile and a custom profile of the same name, the custom profile located in [filename]`/etc/tuned/profiles` is used.
++[filename]`/etc/tuned/`::
++If you need to customize a profile, copy the profile directory into the [filename]`/etc/tuned/` directory, which is used for custom profiles, and then adjust it. If there is a system profile and a custom profile of the same name, the custom profile located in [filename]`/etc/tuned/` is used.
+ 
+ .User-defined profile directories
+ ====
+-If you want to make TuneD load profiles from a directory other than [filename]`/usr/lib/tuned/profiles/` and [filename]`/etc/tuned/profiles/`, you can list it in [filename]`/etc/tuned/tuned-main.conf` as follows:
++If you want to make TuneD load profiles from a directory other than [filename]`/usr/lib/tuned/` and [filename]`/etc/tuned/`, you can list it in [filename]`/etc/tuned/tuned-main.conf` as follows:
+ ----
+-profile_dirs=/usr/lib/tuned/profiles,/etc/tuned/profiles,/my/custom/profiles
++profile_dirs=/usr/lib/tuned,/etc/tuned,/my/custom/profiles
+ ----
+ In this example, profiles are loaded also from [filename]`/my/custom/profiles/`. If two directories contain profiles with the same names, the one that is listed later takes precedence.
+ ====
+diff --git a/doc/manual/modules/performance/proc_creating-new-tuned-profiles.adoc b/doc/manual/modules/performance/proc_creating-new-tuned-profiles.adoc
+index 7f7c75f..5c83a4c 100644
+--- a/doc/manual/modules/performance/proc_creating-new-tuned-profiles.adoc
++++ b/doc/manual/modules/performance/proc_creating-new-tuned-profiles.adoc
+@@ -17,11 +17,11 @@ endif::[]
+ 
+ .Procedure
+ 
+-. In the [filename]`/etc/tuned/profiles/` directory, create a new directory named the same as the profile that you want to create:
++. In the [filename]`/etc/tuned/` directory, create a new directory named the same as the profile that you want to create:
+ +
+ [subs="quotes"]
+ ----
+-# mkdir /etc/tuned/profiles/[replaceable]_my-profile_
++# mkdir /etc/tuned/[replaceable]_my-profile_
+ ----
+ 
+ . In the new directory, create a file named [filename]`tuned.conf`. Add a `[main]` section and plug-in definitions in it, according to your requirements.
+diff --git a/doc/manual/modules/performance/proc_modifying-existing-tuned-profiles.adoc b/doc/manual/modules/performance/proc_modifying-existing-tuned-profiles.adoc
+index 8134030..9ed5d0b 100644
+--- a/doc/manual/modules/performance/proc_modifying-existing-tuned-profiles.adoc
++++ b/doc/manual/modules/performance/proc_modifying-existing-tuned-profiles.adoc
+@@ -17,11 +17,11 @@ endif::[]
+ 
+ .Procedure
+ 
+-. In the [filename]`/etc/tuned/profiles/` directory, create a new directory named the same as the profile that you want to create:
++. In the [filename]`/etc/tuned/` directory, create a new directory named the same as the profile that you want to create:
+ +
+ [subs="quotes"]
+ ----
+-# mkdir /etc/tuned/profiles/[replaceable]_modified-profile_
++# mkdir /etc/tuned/[replaceable]_modified-profile_
+ ----
+ 
+ . In the new directory, create a file named [filename]`tuned.conf`, and set the `[main]` section as follows:
+@@ -75,13 +75,13 @@ See TuneD log file ('/var/log/tuned/tuned.log') for details.
+ ----
+ 
+ // .An alternative approach
+-// . Alternatively, copy the directory with a system profile from /usr/lib/tuned/profiles/ to /etc/tuned/profiles/. For example:
++// . Alternatively, copy the directory with a system profile from /user/lib/tuned/ to /etc/tuned/. For example:
+ // +
+ // ----
+-// # cp -r /usr/lib/tuned/profiles/throughput-performance /etc/tuned/profiles
++// # cp -r /usr/lib/tuned/throughput-performance /etc/tuned
+ // ----
+ //
+-// . Then, edit the profile in /etc/tuned/profiles/ according to your needs. Note that if there are two profiles of the same name, the profile located in /etc/tuned/profiles/ is loaded. The disadvantage of this approach is that if a system profile is updated after a TuneD upgrade, the changes will not be reflected in the now-outdated modified version.
++// . Then, edit the profile in /etc/tuned according to your needs. Note that if there are two profiles of the same name, the profile located in /etc/tuned/ is loaded. The disadvantage of this approach is that if a system profile is updated after a TuneD upgrade, the changes will not be reflected in the now-outdated modified version.
+ 
+ [role="_additional-resources"]
+ .Additional resources
+diff --git a/doc/manual/modules/performance/proc_setting-the-disk-scheduler-using-tuned.adoc b/doc/manual/modules/performance/proc_setting-the-disk-scheduler-using-tuned.adoc
+index c4c5a3c..d66f261 100644
+--- a/doc/manual/modules/performance/proc_setting-the-disk-scheduler-using-tuned.adoc
++++ b/doc/manual/modules/performance/proc_setting-the-disk-scheduler-using-tuned.adoc
+@@ -58,7 +58,7 @@ $ tuned-adm active
+ +
+ [subs="quotes"]
+ ----
+-# mkdir /etc/tuned/profiles/[replaceable]__my-profile__
++# mkdir /etc/tuned/[replaceable]__my-profile__
+ ----
+ 
+ . Find the system unique identifier of the selected block device:
+@@ -77,7 +77,7 @@ ID_SERIAL_SHORT=_20120501030900000_
+ The command in the this example will return all values identified as a World Wide Name (WWN) or serial number associated with the specified block device. Although it is preferred to use a WWN, the WWN is not always available for a given device and any values returned by the example command are acceptable to use as the _device system unique ID_.
+ ====
+ 
+-. Create the `/etc/tuned/profiles/[replaceable]_my-profile_/tuned.conf` configuration file. In the file, set the following options:
++. Create the `/etc/tuned/_my-profile_/tuned.conf` configuration file. In the file, set the following options:
+ 
+ .. Optional: Include an existing profile:
+ +
+diff --git a/man/tuned-adm.8 b/man/tuned-adm.8
+index 972f8b6..f29966d 100644
+--- a/man/tuned-adm.8
++++ b/man/tuned-adm.8
+@@ -31,8 +31,8 @@ This command line utility allows you to switch between user definable tuning
+ profiles. Several predefined profiles are already included. You can even
+ create your own profile, either based on one of the existing ones by copying
+ it or make a completely new one. The distribution provided profiles are stored
+-in subdirectories below \fI/usr/lib/tuned/profiles/\fP and the user defined profiles in
+-subdirectories below \fI/etc/tuned/profiles/\fP. If there are profiles with the same name
++in subdirectories below \fI/usr/lib/tuned\fP and the user defined profiles in
++subdirectories below \fI/etc/tuned\fP. If there are profiles with the same name
+ in both places, user defined profiles have precedence.
+ 
+ .SH "OPTIONS"
+diff --git a/man/tuned-profiles.7 b/man/tuned-profiles.7
+index 1fc8b6b..6bd98a5 100644
+--- a/man/tuned-profiles.7
++++ b/man/tuned-profiles.7
+@@ -30,9 +30,9 @@ performance optimizations but there are also profiles targeted to
+ low power consumption, low latency and others. You can mostly deduce the
+ purpose of the profile by its name or you can see full description below.
+ 
+-The profiles are stored in subdirectories below \fI/usr/lib/tuned/profiles/\fP. If you
+-need to customize the profiles, you can copy them to \fI/etc/tuned/profiles/\fP and modify
+-them as you need. When loading profiles with the same name, \fI/etc/tuned/profiles/\fP takes
++The profiles are stored in subdirectories below \fI/usr/lib/tuned\fP. If you
++need to customize the profiles, you can copy them to \fI/etc/tuned\fP and modify
++them as you need. When loading profiles with the same name, the /etc/tuned takes
+ precedence. In such case you will not lose your customized profiles between
+ TuneD updates.
+ 
+@@ -150,8 +150,8 @@ throughput\-performance profile.
+ 
+ .SH "FILES"
+ .nf
+-.I /etc/tuned/profiles/*
+-.I /usr/lib/tuned/profiles/*
++.I /etc/tuned/*
++.I /usr/lib/tuned/*
+ 
+ .SH "SEE ALSO"
+ .BR tuned (8)
+diff --git a/man/tuned.conf.5 b/man/tuned.conf.5
+index c319130..464b6be 100644
+--- a/man/tuned.conf.5
++++ b/man/tuned.conf.5
+@@ -3,8 +3,8 @@
+ tuned.conf - TuneD profile definition
+ .SH DESCRIPTION
+ This man page documents format of TuneD 2.0 profile definition files.
+-The profile definition is stored in /etc/tuned/profiles/<profile_name>/tuned.conf or in
+-/usr/lib/tuned/profiles/<profile_name>/tuned.conf file where the /etc/tuned/profiles/ directory has
++The profile definition is stored in /etc/tuned/<profile_name>/tuned.conf or in
++/usr/lib/tuned/<profile_name>/tuned.conf file where the /etc/tuned/ directory has 
+ higher priority.
+ 
+ The \fBtuned.conf\fR configures the profile and it is in ini-file format.
+diff --git a/tuned-adm.bash b/tuned-adm.bash
+index 18c716b..a4e6075 100644
+--- a/tuned-adm.bash
++++ b/tuned-adm.bash
+@@ -9,7 +9,7 @@ _tuned_adm()
+ 	if [[ "$cword" -eq 1 ]]; then
+ 		COMPREPLY=( $(compgen -W "$commands" -- "$cur" ) )
+ 	elif [[ "$cword" -eq 2 && ("$prev" == "profile" || "$prev" == "profile_info") ]]; then
+-		COMPREPLY=( $(compgen -W "$(command find /usr/lib/tuned/profiles /etc/tuned/profiles -mindepth 1 -maxdepth 1 -type d -printf "%f\n")" -- "$cur" ) )
++		COMPREPLY=( $(compgen -W "$(command find /usr/lib/tuned /etc/tuned -mindepth 1 -maxdepth 1 -type d -printf "%f\n")" -- "$cur" ) )
+ 	else
+ 		COMPREPLY=()
+ 	fi
