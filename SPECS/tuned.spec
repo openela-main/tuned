@@ -43,7 +43,7 @@
 Summary: A dynamic adaptive system tuning daemon
 Name: tuned
 Version: 2.25.1
-Release: 1%{?prerel1}%{?dist}
+Release: 2%{?prerel1}%{?dist}
 License: GPLv2+
 Source0: https://github.com/redhat-performance/%{name}/archive/v%{version}%{?prerel2}/%{name}-%{version}%{?prerel2}.tar.gz
 # RHEL-9 specific recommend.conf:
@@ -110,6 +110,7 @@ Requires: python3-syspurpose
 %endif
 # Revert default profile directory migration only applicable for RHEL-10+
 Patch0: tuned-2.25.0-revert-profile-migration.patch
+Patch1: tuned-2.25.1-bootc-kargs.patch
 
 %description
 The tuned package contains a daemon that tunes system settings dynamically.
@@ -630,6 +631,11 @@ fi
 %config(noreplace) %{_sysconfdir}/tuned/ppd.conf
 
 %changelog
+* Thu Jun 05 2025 Pavol Žáčik <pzacik@redhat.com> - 2.25.1-2
+- Fix handling of kernel arguments on bootc systems
+  resolves: RHEL-45836
+  resolves: RHEL-86814
+
 * Tue Feb  4 2025 Jaroslav Škarvada <jskarvad@redhat.com> - 2.25.1-1
 - new release
   - rebased tuned to latest upstream
