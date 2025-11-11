@@ -42,15 +42,16 @@
 
 Summary: A dynamic adaptive system tuning daemon
 Name: tuned
-Version: 2.25.1
-Release: 2%{?prerel1}%{?dist}
+Version: 2.26.0
+Release: 1%{?prerel1}%{?dist}
 License: GPLv2+
 Source0: https://github.com/redhat-performance/%{name}/archive/v%{version}%{?prerel2}/%{name}-%{version}%{?prerel2}.tar.gz
 # RHEL-9 specific recommend.conf:
 Source1: recommend.conf
 URL: http://www.tuned-project.org/
 BuildArch: noarch
-BuildRequires: systemd, desktop-file-utils
+BuildRequires: systemd
+BuildRequires: desktop-file-utils
 %if 0%{?rhel}
 BuildRequires: asciidoc
 %else
@@ -60,7 +61,8 @@ Requires(post): systemd, virt-what
 Requires(preun): systemd
 Requires(postun): systemd
 BuildRequires: make
-BuildRequires: %{_py}, %{_py}-devel
+BuildRequires: %{_py}
+BuildRequires: %{_py}-devel
 # BuildRequires for 'make test'
 # python-mock is needed for python-2.7, but it's not available on RHEL-7, only in the EPEL
 %if %{without python3} && ( ! 0%{?rhel} || 0%{?rhel} >= 8 || 0%{?epel})
@@ -76,15 +78,23 @@ Requires: %{_py}-schedutils
 # requires for packages with inconsistent python2/3 names
 %if %{with python3}
 # BuildRequires for 'make test'
-BuildRequires: python3-dbus, python3-gobject-base
-Requires: python3-dbus, python3-gobject-base
+BuildRequires: python3-dbus
+BuildRequires: python3-gobject-base
+Requires: python3-dbus
+Requires: python3-gobject-base
 %else
 # BuildRequires for 'make test'
-BuildRequires: dbus-python, pygobject3-base
-Requires: dbus-python, pygobject3-base
+BuildRequires: dbus-python
+BuildRequires: pygobject3-base
+Requires: dbus-python
+Requires: pygobject3-base
 %endif
-Requires: virt-what, ethtool, gawk
-Requires: util-linux, dbus, polkit
+Requires: virt-what
+Requires: ethtool
+Requires: gawk
+Requires: util-linux
+Requires: dbus
+Requires: polkit
 %if 0%{?fedora} > 22 || 0%{?rhel} > 7
 Recommends: dmidecode
 # https://src.fedoraproject.org/rpms/tuned/pull-request/8
@@ -110,7 +120,6 @@ Requires: python3-syspurpose
 %endif
 # Revert default profile directory migration only applicable for RHEL-10+
 Patch0: tuned-2.25.0-revert-profile-migration.patch
-Patch1: tuned-2.25.1-bootc-kargs.patch
 
 %description
 The tuned package contains a daemon that tunes system settings dynamically.
@@ -299,10 +308,8 @@ make install DESTDIR="%{buildroot}" BINDIR="%{_bindir}" SBINDIR="%{_sbindir}" \
 make install-ppd DESTDIR="%{buildroot}" BINDIR="%{_bindir}" \
   SBINDIR="%{_sbindir}" DOCDIR="%{docdir}" %{make_python_arg}
 
-%if ! 0%{?rhel}
 # manual
 make install-html DESTDIR=%{buildroot} DOCDIR=%{docdir}
-%endif
 
 # conditional support for grub2, grub2 is not available on all architectures
 # and tuned is noarch package, thus the following hack is needed
@@ -631,6 +638,40 @@ fi
 %config(noreplace) %{_sysconfdir}/tuned/ppd.conf
 
 %changelog
+* Mon Aug 25 2025 Jaroslav Škarvada  <jskarvad@redhat.com> - 2.26.0-1
+- new release
+  - rebased tuned to latest upstream
+    related: RHEL-94808
+
+* Sun Aug 17 2025 Jaroslav Škarvada  <jskarvad@redhat.com> - 2.26.0-0.1.rc1
+- new release
+  - rebased tuned to latest upstream
+    resolves: RHEL-94808
+  - tuned-ppd: renamed thinkpad_function_keys as sysfs_acpi_monitor
+  - tuned-ppd: enabled sysfs_acpi_monitor by default
+  - tuned-ppd: fixed inotify watch for performance degradation
+  - tuned-ppd: pinned virtual files in memory for inotify
+  - fixed instance priority inheritance
+  - hotplug: added fixes for device remove race condition
+  - tuned-main.conf: added startup_udev_settle_wait option
+  - functions: silenced errors if module kvm_intel does not exist
+    resolves: RHEL-79943
+  - functions: make calc_isolated_cores return CPU ranges
+    resolves: RHEL-75751
+  - scsi: used 'med_power_with_dipm' for SATA ALPM
+  - scsi: do not set ALPM on external SATA ports
+  - network_latency: Set non-zero rcutree.nohz_full_patience_delay
+  - realtime: Disable appropriate P-State drivers
+    resolves: RHEL-85637
+  - plugin_disk: added support for MMC (MultiMediaCard) devices
+  - udev: fix possible traceback in device matcher
+  - udev-settle: obey udev buffer size and handle possible tracebacks
+  - daemon: re-raise daemon init exception in no-daemon mode
+    resolves: RHEL-71304
+  - vm: deprecate dirty_ratio in favour of dirty_bytes with percents
+    resolves: RHEL-101578
+  - gui: fix the profile deleter script
+
 * Thu Jun 05 2025 Pavol Žáčik <pzacik@redhat.com> - 2.25.1-2
 - Fix handling of kernel arguments on bootc systems
   resolves: RHEL-45836
