@@ -43,7 +43,7 @@
 Summary: A dynamic adaptive system tuning daemon
 Name: tuned
 Version: 2.26.0
-Release: 1%{?prerel1}%{?dist}
+Release: 1%{?prerel1}%{?dist}.1
 License: GPL-2.0-or-later AND CC-BY-SA-3.0
 Source0: https://github.com/redhat-performance/%{name}/archive/v%{version}%{?prerel2}/%{name}-%{version}%{?prerel2}.tar.gz
 # RHEL-9 specific recommend.conf:
@@ -118,6 +118,8 @@ Recommends: subscription-manager
 Requires: python3-syspurpose
 %endif
 %endif
+# https://github.com/redhat-performance/tuned/pull/805
+Patch: tuned-2.26.0-cpu-partitioning-initrd-workaround.patch
 
 %description
 The tuned package contains a daemon that tunes system settings dynamically.
@@ -635,6 +637,10 @@ fi
 %config(noreplace) %{_sysconfdir}/tuned/ppd.conf
 
 %changelog
+* Mon Oct 20 2025 Jaroslav Škarvada  <jskarvad@redhat.com> - 2.26.0-1.1
+- cpu-partitioning: added initrd generation dracut/systemd workarounds
+  resolves: RHEL-120175
+
 * Mon Aug 25 2025 Jaroslav Škarvada  <jskarvad@redhat.com> - 2.26.0-1
 - new release
   - rebased tuned to latest upstream
