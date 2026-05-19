@@ -42,8 +42,8 @@
 
 Summary: A dynamic adaptive system tuning daemon
 Name: tuned
-Version: 2.26.0
-Release: 1%{?prerel1}%{?dist}.1
+Version: 2.27.0
+Release: 1%{?prerel1}%{?dist}
 License: GPL-2.0-or-later AND CC-BY-SA-3.0
 Source0: https://github.com/redhat-performance/%{name}/archive/v%{version}%{?prerel2}/%{name}-%{version}%{?prerel2}.tar.gz
 # RHEL-9 specific recommend.conf:
@@ -118,8 +118,8 @@ Recommends: subscription-manager
 Requires: python3-syspurpose
 %endif
 %endif
-# https://github.com/redhat-performance/tuned/pull/805
-Patch: tuned-2.26.0-cpu-partitioning-initrd-workaround.patch
+# Revert not yet RHEL approved tuning
+Patch: tuned-2.27.0-openshift-revert.patch
 
 %description
 The tuned package contains a daemon that tunes system settings dynamically.
@@ -308,7 +308,7 @@ make install-ppd DESTDIR="%{buildroot}" BINDIR="%{_bindir}" \
   SBINDIR="%{_sbindir}" DOCDIR="%{docdir}" %{make_python_arg}
 
 # manual
-make install-html DESTDIR=%{buildroot} DOCDIR=%{docdir}
+make install-html DESTDIR=%{buildroot} DOCDIR=%{docdir} %{make_python_arg}
 
 # conditional support for grub2, grub2 is not available on all architectures
 # and tuned is noarch package, thus the following hack is needed
@@ -637,6 +637,27 @@ fi
 %config(noreplace) %{_sysconfdir}/tuned/ppd.conf
 
 %changelog
+* Sun Feb 22 2026 Jaroslav Škarvada <jskarvad@redhat.com> - 2.27.0-1
+- new release
+  - rebased tuned to latest upstream
+    related: RHEL-123608
+
+* Tue Feb 10 2026 Jaroslav Škarvada <jskarvad@redhat.com> - 2.27.0-0.1.rc1
+- new release
+  - rebased tuned to latest upstream
+    resolves: RHEL-123608
+  - cpu-partitioning: autodetect dracut hook directory, systemd workaround
+    resolves: RHEL-40619
+  - openshift: optimize TCP settings for high throughput and low latency
+  - profiles: Set boost=1 in *-performance profiles
+  - sap-hana: force latency to 70 us, not to C-states
+    resolves: RHEL-142285
+  - man: fixed instance_acquire_devices example in tuned-adm man
+    resolves: RHEL-90575
+  - spec: use correct python interpreter for documentation installation
+  - sysctl: add reapply_sysctl_exclude option
+  - ppd: ask tuned recommend for base profile
+
 * Mon Oct 20 2025 Jaroslav Škarvada  <jskarvad@redhat.com> - 2.26.0-1.1
 - cpu-partitioning: added initrd generation dracut/systemd workarounds
   resolves: RHEL-120175
