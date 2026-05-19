@@ -1,0 +1,29 @@
+From 8d6874c9439054f5baa04b9988d4a472c5c2924b Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Jaroslav=20=C5=A0karvada?= <jskarvad@redhat.com>
+Date: Tue, 10 Feb 2026 22:36:42 +0100
+Subject: [PATCH] Revert "feat(openshift): Optimize TCP settings for high
+ throughput and low latency"
+
+This reverts commit 7a1a288e85fdcd0cb163b307a54a0718064f6641.
+---
+ profiles/openshift/tuned.conf | 4 ----
+ 1 file changed, 4 deletions(-)
+
+diff --git a/profiles/openshift/tuned.conf b/profiles/openshift/tuned.conf
+index b3cf62b..197850c 100644
+--- a/profiles/openshift/tuned.conf
++++ b/profiles/openshift/tuned.conf
+@@ -17,10 +17,6 @@ kernel.pid_max=>4194304
+ fs.aio-max-nr=>1048576
+ net.netfilter.nf_conntrack_max=1048576
+ net.ipv4.conf.all.arp_announce=2
+-net.ipv4.tcp_notsent_lowat=131072
+-net.ipv4.tcp_slow_start_after_idle=0
+-net.ipv4.tcp_rmem="4096 131072 16777216"
+-net.ipv4.tcp_wmem="4096 16384 16777216"
+ net.ipv4.neigh.default.gc_thresh1=8192
+ net.ipv4.neigh.default.gc_thresh2=32768
+ net.ipv4.neigh.default.gc_thresh3=65536
+-- 
+2.52.0
+
