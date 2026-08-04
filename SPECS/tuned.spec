@@ -43,7 +43,7 @@
 Summary: A dynamic adaptive system tuning daemon
 Name: tuned
 Version: 2.27.0
-Release: 1%{?prerel1}%{?dist}
+Release: 2%{?prerel1}%{?dist}
 License: GPL-2.0-or-later AND CC-BY-SA-3.0
 Source0: https://github.com/redhat-performance/%{name}/archive/v%{version}%{?prerel2}/%{name}-%{version}%{?prerel2}.tar.gz
 # RHEL-9 specific recommend.conf:
@@ -120,6 +120,8 @@ Requires: python3-syspurpose
 %endif
 # Revert not yet RHEL approved tuning
 Patch: tuned-2.27.0-openshift-revert.patch
+# https://github.com/redhat-performance/tuned/pull/852
+Patch: tuned-2.27.0-net-coalescing-fix.patch
 
 %description
 The tuned package contains a daemon that tunes system settings dynamically.
@@ -637,6 +639,10 @@ fi
 %config(noreplace) %{_sysconfdir}/tuned/ppd.conf
 
 %changelog
+* Mon Jun 15 2026 Jaroslav Škarvada <jskarvad@redhat.com> - 2.27.0-2
+- net: added more coalescing options, filter out unsupported ones
+  resolves: RHEL-181667
+
 * Sun Feb 22 2026 Jaroslav Škarvada <jskarvad@redhat.com> - 2.27.0-1
 - new release
   - rebased tuned to latest upstream
