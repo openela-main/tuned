@@ -35,7 +35,7 @@
 Summary: A dynamic adaptive system tuning daemon
 Name: tuned
 Version: 2.22.1
-Release: 6%{?prerel1}%{?dist}
+Release: 7%{?prerel1}%{?dist}
 License: GPLv2+
 Source0: https://github.com/redhat-performance/%{name}/archive/v%{version}%{?prerel2}/%{name}-%{version}%{?prerel2}.tar.gz
 # RHEL-8 specific recommend.conf:
@@ -106,6 +106,8 @@ Patch4: tuned-2.21.1-CVE-2024-52337.patch
 Patch5: tuned-2.22.1-use-hdparm-lazily.patch
 # Disable the amd.scheduler plug-in instance in the postgresql profile (see RHEL-70470 for details)
 Patch6: tuned-2.22.1-postgresql-disable-amd-instance.patch
+# sap-hana force latency to 70 us (see RHEL-184274 for details)
+Patch7: tuned-2.21.0-sap-hana-latency-force-70us.patch
 
 %description
 The tuned package contains a daemon that tunes system settings dynamically.
@@ -578,6 +580,10 @@ fi
 %config(noreplace) %{_sysconfdir}/tuned/ppd.conf
 
 %changelog
+* Mon Jun 29 2026 Jaroslav Škarvada <jskarvad@redhat.com> - 2.22.1-7
+- sap-hana forced latency to 70 us
+  Resolves: RHEL-184274
+
 * Mon Jan 06 2025 Pavol Žáčik <pzacik@redhat.com> - 2.22.1-6
 - Make hdparm device checks lazy
   Resolves: RHEL-71457

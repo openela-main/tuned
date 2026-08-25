@@ -1,0 +1,32 @@
+From 90d0aee4d2d9ca6d1084f39a3c874e35d6f9fb76 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Jaroslav=20=C5=A0karvada?= <jskarvad@redhat.com>
+Date: Mon, 2 Feb 2026 16:59:27 +0100
+Subject: [PATCH] sap-hana: force latency to 70 us, not to C-states
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Resolves: RHEL-142285
+Resolves: #808
+
+Signed-off-by: Jaroslav Škarvada <jskarvad@redhat.com>
+---
+ profiles/sap-hana/tuned.conf | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/profiles/sap-hana/tuned.conf b/profiles/sap-hana/tuned.conf
+index 80cebe0..daea3df 100644
+--- a/profiles/sap-hana/tuned.conf
++++ b/profiles/sap-hana/tuned.conf
+@@ -6,7 +6,7 @@
+ summary=Optimize for SAP HANA
+ 
+ [cpu]
+-force_latency=cstate.id_no_zero:3|70
++force_latency=70
+ governor=performance
+ energy_perf_bias=performance
+ min_perf_pct=100
+-- 
+2.54.0
+
