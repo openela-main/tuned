@@ -1,0 +1,80 @@
+diff --git a/doc/manual/meta/variables.adoc b/doc/manual/meta/variables.adoc
+index 008ac79..197b003 100644
+--- a/doc/manual/meta/variables.adoc
++++ b/doc/manual/meta/variables.adoc
+@@ -1,2 +1,2 @@
+-:system-profile-dir: /usr/lib/tuned/profiles
+-:user-profile-dir: /etc/tuned/profiles
++:system-profile-dir: /usr/lib/tuned
++:user-profile-dir: /etc/tuned
+diff --git a/man/tuned-adm.8 b/man/tuned-adm.8
+index 432bd20..e5c7bce 100644
+--- a/man/tuned-adm.8
++++ b/man/tuned-adm.8
+@@ -31,8 +31,8 @@ This command line utility allows you to switch between user definable tuning
+ profiles. Several predefined profiles are already included. You can even
+ create your own profile, either based on one of the existing ones by copying
+ it or make a completely new one. The distribution provided profiles are stored
+-in subdirectories below \fI/usr/lib/tuned/profiles/\fP and the user defined profiles in
+-subdirectories below \fI/etc/tuned/profiles/\fP. If there are profiles with the same name
++in subdirectories below \fI/usr/lib/tuned\fP and the user defined profiles in
++subdirectories below \fI/etc/tuned\fP. If there are profiles with the same name
+ in both places, user defined profiles have precedence.
+ 
+ .SH "OPTIONS"
+diff --git a/man/tuned-profiles.7 b/man/tuned-profiles.7
+index 88d4dbb..e3f9262 100644
+--- a/man/tuned-profiles.7
++++ b/man/tuned-profiles.7
+@@ -30,9 +30,9 @@ performance optimizations but there are also profiles targeted to
+ low power consumption, low latency and others. You can mostly deduce the
+ purpose of the profile by its name or you can see full description below.
+ 
+-The profiles are stored in subdirectories below \fI/usr/lib/tuned/profiles/\fP. If you
+-need to customize the profiles, you can copy them to \fI/etc/tuned/profiles/\fP and modify
+-them as you need. When loading profiles with the same name, \fI/etc/tuned/profiles/\fP takes
++The profiles are stored in subdirectories below \fI/usr/lib/tuned\fP. If you
++need to customize the profiles, you can copy them to \fI/etc/tuned\fP and modify
++them as you need. When loading profiles with the same name, the /etc/tuned takes
+ precedence. In such case you will not lose your customized profiles between
+ TuneD updates.
+ 
+@@ -150,8 +150,8 @@ throughput\-performance profile.
+ 
+ .SH "FILES"
+ .nf
+-.I /etc/tuned/profiles/*
+-.I /usr/lib/tuned/profiles/*
++.I /etc/tuned/*
++.I /usr/lib/tuned/*
+ 
+ .SH "SEE ALSO"
+ .BR tuned (8)
+diff --git a/man/tuned.conf.5 b/man/tuned.conf.5
+index c319130..464b6be 100644
+--- a/man/tuned.conf.5
++++ b/man/tuned.conf.5
+@@ -3,8 +3,8 @@
+ tuned.conf - TuneD profile definition
+ .SH DESCRIPTION
+ This man page documents format of TuneD 2.0 profile definition files.
+-The profile definition is stored in /etc/tuned/profiles/<profile_name>/tuned.conf or in
+-/usr/lib/tuned/profiles/<profile_name>/tuned.conf file where the /etc/tuned/profiles/ directory has
++The profile definition is stored in /etc/tuned/<profile_name>/tuned.conf or in
++/usr/lib/tuned/<profile_name>/tuned.conf file where the /etc/tuned/ directory has 
+ higher priority.
+ 
+ The \fBtuned.conf\fR configures the profile and it is in ini-file format.
+diff --git a/tuned-adm.bash b/tuned-adm.bash
+index 18c716b..a4e6075 100644
+--- a/tuned-adm.bash
++++ b/tuned-adm.bash
+@@ -9,7 +9,7 @@ _tuned_adm()
+ 	if [[ "$cword" -eq 1 ]]; then
+ 		COMPREPLY=( $(compgen -W "$commands" -- "$cur" ) )
+ 	elif [[ "$cword" -eq 2 && ("$prev" == "profile" || "$prev" == "profile_info") ]]; then
+-		COMPREPLY=( $(compgen -W "$(command find /usr/lib/tuned/profiles /etc/tuned/profiles -mindepth 1 -maxdepth 1 -type d -printf "%f\n")" -- "$cur" ) )
++		COMPREPLY=( $(compgen -W "$(command find /usr/lib/tuned /etc/tuned -mindepth 1 -maxdepth 1 -type d -printf "%f\n")" -- "$cur" ) )
+ 	else
+ 		COMPREPLY=()
+ 	fi
