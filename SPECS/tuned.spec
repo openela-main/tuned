@@ -42,11 +42,11 @@
 
 Summary: A dynamic adaptive system tuning daemon
 Name: tuned
-Version: 2.27.0
-Release: 2%{?prerel1}%{?dist}
+Version: 2.28.0
+Release: 1%{?prerel1}%{?dist}
 License: GPL-2.0-or-later AND CC-BY-SA-3.0
 Source0: https://github.com/redhat-performance/%{name}/archive/v%{version}%{?prerel2}/%{name}-%{version}%{?prerel2}.tar.gz
-# RHEL-9 specific recommend.conf:
+# RHEL-10 specific recommend.conf:
 Source1: recommend.conf
 URL: http://www.tuned-project.org/
 BuildArch: noarch
@@ -91,6 +91,7 @@ Requires: pygobject3-base
 %endif
 Requires: virt-what
 Requires: ethtool
+Requires: iw
 Requires: gawk
 Requires: util-linux
 Requires: dbus
@@ -118,10 +119,16 @@ Recommends: subscription-manager
 Requires: python3-syspurpose
 %endif
 %endif
+# On image mode (bootc) systems, rpm-ostree is needed by the bootloader
+# plugin for kernel argument management when bootc's native
+# set-options-for-source is not yet available
+%if 0%{?fedora} || 0%{?rhel} >= 9
+Requires: (rpm-ostree if bootc)
+%endif
 # Revert not yet RHEL approved tuning
-Patch: tuned-2.27.0-openshift-revert.patch
-# https://github.com/redhat-performance/tuned/pull/852
-Patch: tuned-2.27.0-net-coalescing-fix.patch
+Patch: tuned-2.28.0-openshift-revert.patch
+# Revert changes for kernel 7
+Patch: tuned-2.28.0-vm-laptop-mode-revert.patch
 
 %description
 The tuned package contains a daemon that tunes system settings dynamically.
@@ -512,6 +519,9 @@ fi
 %config(noreplace) %{_sysconfdir}/tuned/tuned-main.conf
 %config(noreplace) %verify(not size mtime md5) %{_sysconfdir}/tuned/bootcmdline
 %verify(not size mtime md5) %{_sysconfdir}/modprobe.d/tuned.conf
+# https://bugzilla.redhat.com/show_bug.cgi?id=2444143
+%dir %{_sysconfdir}/systemd/system.conf.d
+%verify(not size mtime md5) %{_sysconfdir}/systemd/system.conf.d/00-tuned.conf
 %{_tmpfilesdir}/tuned.conf
 %{_unitdir}/tuned.service
 %dir %{_localstatedir}/log/tuned
@@ -639,6 +649,38 @@ fi
 %config(noreplace) %{_sysconfdir}/tuned/ppd.conf
 
 %changelog
+* Sat Aug 22 2026 Jaroslav Škarvada <jskarvad@redhat.com> - 2.28.0-1
+- new release
+  - rebased tuned to latest upstream
+    related: RHEL-210931
+  - spec: require rpm-ostree on image mode (bootc) systems
+
+* Sat Aug 08 2026 Jaroslav Škarvada <jskarvad@redhat.com> - 2.28.0-0.1.rc1
+- new release
+  - rebased tuned to latest upstream
+    resolves: RHEL-210931
+  - scheduler: check for EPERM when setting IRQ affinity
+    resolves: RHEL-153655
+  - bootloader: set correct permission for tempdir
+  - commands: better error msgs when creating directory and hardened dir mode
+  - docs: build reference guide
+  - systemd: used drop-ins for configuration
+    resolves: RHEL-97580
+  - systemd: do not backup the drop-in configuration
+  - net: add more coalescing options, filter out unsupported ones
+    resolves: RHEL-152675
+  - cpu: do not log error if boost isn't supported
+    resolves: RHEL-169618
+  - bootloader: add bootc loader-entries set-options-for-source support
+    resolves: RHEL-170825
+  - cpu: fixed TypeError when load_threshold is set in a profil
+  - openshift: include network-throughput profile
+  - drop support for vm.laptop_mode which is deprecated in kernel 7.0
+  - net: fixed ring parser to work with rx-mini and rx-jumbo
+  - lscpu_check: do not traceback on invalid regex
+  - network-latency: increase AVC cache to 8192
+  - functions: use iw for Wi-Fi power saving
+
 * Mon Jun 15 2026 Jaroslav Škarvada <jskarvad@redhat.com> - 2.27.0-2
 - net: added more coalescing options, filter out unsupported ones
   resolves: RHEL-181667

@@ -1,0 +1,37 @@
+diff --git a/doc/TIPS.txt b/doc/TIPS.txt
+index 0a0c490..36b4071 100644
+--- a/doc/TIPS.txt
++++ b/doc/TIPS.txt
+@@ -19,6 +19,8 @@
+ * Make sure writes to hd don't wake it up too quickly:
+ ** Set flushing to once per 5 minutes
+ ** echo "3000" > /proc/sys/vm/dirty_writeback_centisecs
++** Enable laptop mode
++** echo "5" > /proc/sys/vm/laptop_mode
+ * Use relatime for your / partition
+ ** mount -o remount,relatime / 
+ * Enable USB autosuspend by adding the following to the kernel boot commandline:
+diff --git a/profiles/powersave/tuned.conf b/profiles/powersave/tuned.conf
+index c8173af..fe12766 100644
+--- a/profiles/powersave/tuned.conf
++++ b/profiles/powersave/tuned.conf
+@@ -37,6 +37,7 @@ panel_power_savings=3
+ alpm=med_power_with_dipm
+ 
+ [sysctl]
++vm.laptop_mode=5
+ vm.dirty_writeback_centisecs=1500
+ kernel.nmi_watchdog=0
+ 
+diff --git a/profiles/spindown-disk/tuned.conf b/profiles/spindown-disk/tuned.conf
+index 75b472b..b13dbd9 100644
+--- a/profiles/spindown-disk/tuned.conf
++++ b/profiles/spindown-disk/tuned.conf
+@@ -32,6 +32,7 @@ dirty_bytes=60%
+ [sysctl]
+ vm.dirty_writeback_centisecs=6000
+ vm.dirty_expire_centisecs=9000
++vm.laptop_mode=5
+ vm.swappiness=30
+ 
+ [script]
